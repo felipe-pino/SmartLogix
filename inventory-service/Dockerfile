@@ -15,3 +15,5 @@ COPY --from=build /workspace/inventory-service/target/inventory-service-1.0.0.ja
 
 EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+
+

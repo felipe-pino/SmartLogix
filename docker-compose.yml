@@ -96,10 +96,10 @@ services:
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 45s
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s # <--- Esto es clave: le damos 60 segundos antes de marcarlo como 'unhealthy
     ports:
-      - "8080:8080"
+      - "8676:8080"
