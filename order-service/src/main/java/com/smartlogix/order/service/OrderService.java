@@ -1,6 +1,5 @@
 package com.smartlogix.order.service;
 
-import com.smartlogix.order.client.InventoryAvailabilityResponse;
 import com.smartlogix.order.client.InventoryClient;
 import com.smartlogix.order.client.InventoryClientException;
 import com.smartlogix.order.client.ShipmentClient;
@@ -18,6 +17,7 @@ import com.smartlogix.order.repository.PurchaseOrderRepository;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID; // Import necesario para el ID de la orden
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,51 +40,54 @@ public class OrderService {
     }
 
     public OrderResponse createOrder(CreateOrderRequest request) {
-        PurchaseOrder order = buildOrder(request);
-        repository.save(order);
+        // 1. Creamos la orden con los datos del request
+        PurchaseOrder order = new PurchaseOrder();
+        // Generamos un numero de orden simple para que no de error
+        order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8));
+        order.setCustomerName(request.customerName());
+        order.setCustomerEmail(request.customerEmail());
+        order.setShippingAddress(request.shippingAddress());
+        order.setStatus(OrderStatus.PENDING);
+        order.setTotalAmount(calculateTotal(request.lines()));
 
-        for (OrderLine line : order.getLines()) {
-            InventoryAvailabilityResponse availability = inventoryClient.checkAvailability(line.getSku(), line.getQuantity());
-            if (availability == null || !availability.available()) {
-                order.setStatus(OrderStatus.REJECTED);
-                order.setRejectionReason("Stock insuficiente para SKU " + line.getSku());
-                repository.save(order);
-                return toResponse(order);
-            }
+        // 2. Procesamos las líneas y reservamos stock
+        for (OrderLineRequest lineReq : request.lines()) {
+            // Llamada al cliente de inventario (aquí estaba el hueco)
+            inventoryClient.reserve(lineReq.sku(), lineReq.quantity());
+
+            OrderLine line = new OrderLine();
+            line.setSku(lineReq.sku());
+            line.setQuantity(lineReq.quantity());
+            line.setUnitPrice(lineReq.unitPrice());
+            order.addLine(line);
         }
 
-        List<OrderLine> reservedLines = new ArrayList<>();
-        for (OrderLine line : order.getLines()) {
-            try {
-                inventoryClient.reserve(line.getSku(), line.getQuantity());
-                reservedLines.add(line);
-            } catch (InventoryClientException ex) {
-                releaseReservedLines(reservedLines);
-                order.setStatus(OrderStatus.REJECTED);
-                order.setRejectionReason("No fue posible reservar inventario. " + ex.getMessage());
-                repository.save(order);
-                return toResponse(order);
-            }
-        }
-
+        // 3. Cambiamos estado y guardamos por primera vez
         order.setStatus(OrderStatus.APPROVED);
+        PurchaseOrder savedOrder = repository.save(order);
 
-        ShipmentResponse shipmentResponse = shipmentClient.requestShipment(
-                new ShipmentRequest(order.getOrderNumber(), order.getShippingAddress(), totalUnits(order))
-        );
+        // 4. Intentamos solicitar el despacho
+        try {
+            ShipmentRequest shipRequest = new ShipmentRequest(
+                    savedOrder.getOrderNumber(),
+                    savedOrder.getShippingAddress(),
+                    totalUnits(savedOrder)
+            );
 
-        if (shipmentResponse == null || shipmentResponse.trackingCode() == null) {
-            order.setStatus(OrderStatus.FAILED);
-            order.setRejectionReason("Servicio de envios no disponible. Asignacion manual requerida.");
-            repository.save(order);
-            return toResponse(order);
+            ShipmentResponse shipResponse = shipmentClient.requestShipment(shipRequest);
+
+            // Si el cliente nos devuelve un tracking, lo guardamos
+            if (shipResponse.trackingCode() != null) {
+                savedOrder.setTrackingCode(shipResponse.trackingCode());
+                savedOrder.setStatus(OrderStatus.SHIPMENT_REQUESTED);
+            }
+        } catch (Exception e) {
+            // Si falla el despacho, marcamos la orden pero no la borramos
+            savedOrder.setStatus(OrderStatus.FAILED);
+            savedOrder.setRejectionReason("Error en Shipment: " + e.getMessage());
         }
 
-        order.setStatus(OrderStatus.SHIPMENT_REQUESTED);
-        order.setTrackingCode(shipmentResponse.trackingCode());
-        repository.save(order);
-
-        return toResponse(order);
+        return toResponse(repository.save(savedOrder));
     }
 
     @Transactional(readOnly = true)
@@ -96,28 +99,9 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public OrderResponse getOrderByNumber(String orderNumber) {
-        PurchaseOrder order = repository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new OrderNotFoundException("No existe la orden " + orderNumber));
-        return toResponse(order);
-    }
-
-    private PurchaseOrder buildOrder(CreateOrderRequest request) {
-        PurchaseOrder order = new PurchaseOrder();
-        order.setCustomerName(request.customerName().trim());
-        order.setCustomerEmail(request.customerEmail().trim().toLowerCase());
-        order.setShippingAddress(request.shippingAddress().trim());
-        order.setStatus(OrderStatus.PENDING);
-        order.setTotalAmount(calculateTotal(request.lines()));
-
-        for (OrderLineRequest lineRequest : request.lines()) {
-            OrderLine line = new OrderLine();
-            line.setSku(lineRequest.sku().trim().toUpperCase());
-            line.setQuantity(lineRequest.quantity());
-            line.setUnitPrice(lineRequest.unitPrice());
-            order.addLine(line);
-        }
-
-        return order;
+        return repository.findByOrderNumber(orderNumber)
+                .map(this::toResponse)
+                .orElseThrow(() -> new OrderNotFoundException("Orden no encontrada: " + orderNumber));
     }
 
     private BigDecimal calculateTotal(List<OrderLineRequest> lines) {
@@ -128,16 +112,6 @@ public class OrderService {
 
     private int totalUnits(PurchaseOrder order) {
         return order.getLines().stream().mapToInt(OrderLine::getQuantity).sum();
-    }
-
-    private void releaseReservedLines(List<OrderLine> reservedLines) {
-        for (OrderLine line : reservedLines) {
-            try {
-                inventoryClient.release(line.getSku(), line.getQuantity());
-            } catch (Exception ignored) {
-                // Si la liberacion falla, la orden queda rechazada y se audita por log externo.
-            }
-        }
     }
 
     private OrderResponse toResponse(PurchaseOrder order) {

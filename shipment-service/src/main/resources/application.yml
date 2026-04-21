@@ -6,7 +6,8 @@ spring:
     name: shipment-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/shipment_db
+    # Ajustado para conectar con el contenedor de la DB
+    url: jdbc:postgresql://postgres-db:5432/shipment_db
     driverClassName: org.postgresql.Driver
     username: postgres
     password: '123456'
@@ -29,4 +30,4 @@ management:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}

@@ -39,56 +39,56 @@ public class InventoryController {
     }
 
     @GetMapping("/items/{sku}")
-    public InventoryItemResponse findBySku(@PathVariable String sku) {
+    public InventoryItemResponse findBySku(@PathVariable("sku") String sku) {
         return inventoryService.findBySku(sku);
     }
 
     @GetMapping("/items/{sku}/availability")
     public InventoryAvailabilityResponse checkAvailability(
-            @PathVariable String sku,
-            @RequestParam @Min(1) int quantity) {
+            @PathVariable("sku") String sku,
+            @RequestParam("quantity") @Min(1) int quantity) {
         return inventoryService.checkAvailability(sku, quantity);
     }
 
     @PatchMapping("/items/{sku}/reserve")
     public InventoryItemResponse reserve(
-            @PathVariable String sku,
-            @RequestParam @Min(1) int quantity) {
+            @PathVariable("sku") String sku,
+            @RequestParam("quantity") @Min(1) int quantity) {
         return inventoryService.reserve(sku, quantity);
     }
 
     @PostMapping("/items/{sku}/reserve")
     public InventoryItemResponse reservePost(
-            @PathVariable String sku,
-            @RequestParam @Min(1) int quantity) {
+            @PathVariable("sku") String sku,
+            @RequestParam("quantity") @Min(1) int quantity) {
         return inventoryService.reserve(sku, quantity);
     }
 
     @PatchMapping("/items/{sku}/release")
     public InventoryItemResponse release(
-            @PathVariable String sku,
-            @RequestParam @Min(1) int quantity) {
+            @PathVariable("sku") String sku,
+            @RequestParam("quantity") @Min(1) int quantity) {
         return inventoryService.release(sku, quantity);
     }
 
     @PostMapping("/items/{sku}/release")
     public InventoryItemResponse releasePost(
-            @PathVariable String sku,
-            @RequestParam @Min(1) int quantity) {
+            @PathVariable("sku") String sku,
+            @RequestParam("quantity") @Min(1) int quantity) {
         return inventoryService.release(sku, quantity);
     }
 
     @PatchMapping("/items/{sku}/dispatch")
     public InventoryItemResponse dispatch(
-            @PathVariable String sku,
-            @RequestParam @Min(1) int quantity) {
+            @PathVariable("sku") String sku,
+            @RequestParam("quantity") @Min(1) int quantity) {
         return inventoryService.dispatch(sku, quantity);
     }
 
     @PostMapping("/items/{sku}/dispatch")
     public InventoryItemResponse dispatchPost(
-            @PathVariable String sku,
-            @RequestParam @Min(1) int quantity) {
+            @PathVariable("sku") String sku,
+            @RequestParam("quantity") @Min(1) int quantity) {
         return inventoryService.dispatch(sku, quantity);
     }
 }

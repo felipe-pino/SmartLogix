@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "orders")
@@ -58,19 +57,26 @@ public class PurchaseOrder {
     private List<OrderLine> lines = new ArrayList<>();
 
     @PrePersist
-    public void beforeInsert() {
+    protected void onCreate() {
         this.createdAt = OffsetDateTime.now();
-        if (this.orderNumber == null || this.orderNumber.isBlank()) {
-            this.orderNumber = "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        }
     }
+
+    // --- GETTERS Y SETTERS MANUALES ---
 
     public Long getId() {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getOrderNumber() {
         return orderNumber;
+    }
+
+    public void setOrderNumber(String orderNumber) {
+        this.orderNumber = orderNumber;
     }
 
     public String getCustomerName() {
@@ -133,10 +139,19 @@ public class PurchaseOrder {
         return createdAt;
     }
 
+    public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public List<OrderLine> getLines() {
         return lines;
     }
 
+    public void setLines(List<OrderLine> lines) {
+        this.lines = lines;
+    }
+
+    // Método con lógica
     public void addLine(OrderLine line) {
         line.setOrder(this);
         this.lines.add(line);

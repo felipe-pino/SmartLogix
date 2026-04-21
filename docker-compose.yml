@@ -7,9 +7,9 @@ services:
       - POSTGRES_PASSWORD=123456
     ports:
       - "5432:5432"
-    # Este volumen asegura que tus datos no se borren al apagar Docker
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
   discovery-service:
     build:
@@ -123,7 +123,7 @@ services:
       retries: 3
       start_period: 60s
     ports:
-      - "8676:8080"
+      - "8080:8080"
 
 volumes:
   postgres_data:
