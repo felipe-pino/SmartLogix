@@ -42,8 +42,8 @@ public class ShipmentController {
 
     @PatchMapping("/{trackingCode}/status")
     public ShipmentResponse updateStatus(
-            @PathVariable String trackingCode,
-            @RequestParam ShipmentStatus value) {
+            @PathVariable("trackingCode") String trackingCode,
+            @RequestParam("value") ShipmentStatus value) {
         return shipmentService.updateStatus(trackingCode, value);
     }
 }
