@@ -13,5 +13,5 @@ RUN apt-get update \
 
 COPY --from=build /workspace/order-service/target/order-service-1.0.0.jar app.jar
 
-EXPOSE 8082
+EXPOSE 8085
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
