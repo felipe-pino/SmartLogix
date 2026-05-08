@@ -13,6 +13,7 @@
     <modules>
         <module>discovery-service</module>
         <module>api-gateway</module>
+        <module>auth-service</module>
         <module>inventory-service</module>
         <module>order-service</module>
         <module>shipment-service</module>
@@ -22,6 +23,7 @@
         <java.version>17</java.version>
         <spring.boot.version>3.3.5</spring.boot.version>
         <spring.cloud.version>2023.0.3</spring.cloud.version>
+        <maven.compiler.parameters>true</maven.compiler.parameters>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -53,6 +55,7 @@
                     <version>3.13.0</version>
                     <configuration>
                         <release>${java.version}</release>
+                        <parameters>true</parameters>
                     </configuration>
                 </plugin>
                 <plugin>

@@ -1,16 +1,18 @@
 services:
+  # 1. TU BASE DE DATOS (Se mantiene intacta)
   postgres-db:
     image: postgres:15
     container_name: smartlogix-db
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=123456
+      - POSTGRES_USER=${DB_USERNAME:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-123456}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  # 2. DISCOVERY SERVICE
   discovery-service:
     image: astralisss/discovery-service:latest
     restart: unless-stopped
@@ -23,6 +25,31 @@ services:
     ports:
       - "8761:8761"
 
+  # 3. AUTH SERVICE (El nuevo integrante, adaptado a tu Postgres)
+  auth-service:
+    image: astralisss/auth-service:latest # Asegúrate de subir esta imagen o cambiar a build
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      postgres-db:
+        condition: service_started
+    restart: unless-stopped
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/auth_db
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-123456}
+      - JWT_SECRET=${JWT_SECRET}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8084/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 35s
+    ports:
+      - "8084:8084"
+
+  # 4. INVENTORY SERVICE
   inventory-service:
     image: astralisss/inventory-service:latest
     depends_on:
@@ -34,8 +61,9 @@ services:
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/inventory_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-123456}
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
       interval: 15s
@@ -45,6 +73,7 @@ services:
     ports:
       - "8081:8081"
 
+  # 5. SHIPMENT SERVICE
   shipment-service:
     image: astralisss/shipment-service:latest
     depends_on:
@@ -56,8 +85,9 @@ services:
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/shipment_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-123456}
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8083/actuator/health"]
       interval: 15s
@@ -67,6 +97,7 @@ services:
     ports:
       - "8083:8083"
 
+  # 6. ORDER SERVICE (Puerto 8085 mantenido)
   order-service:
     image: astralisss/order-service:latest
     depends_on:
@@ -82,8 +113,9 @@ services:
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/order_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-123456}
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8085/actuator/health"]
       interval: 15s
@@ -93,14 +125,18 @@ services:
     ports:
       - "8085:8085"
 
+  # 7. API GATEWAY
   api-gateway:
     image: astralisss/api-gateway:latest
     depends_on:
       discovery-service:
         condition: service_healthy
+      auth-service:
+        condition: service_healthy
     restart: unless-stopped
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - JWT_SECRET=${JWT_SECRET}
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 30s

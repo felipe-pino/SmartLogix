@@ -1,12 +1,13 @@
 server:
-  port: 8083
+  port: 8084
 
 spring:
   application:
-    name: shipment-service
+    name: auth-service
 
   datasource:
-    url: jdbc:postgresql://postgres-db:5432/shipment_db
+    # Usamos la misma lógica de variables que en Order
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/${AUTH_DB_NAME:auth_db}
     driverClassName: org.postgresql.Driver
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD}
@@ -20,8 +21,18 @@ spring:
       hibernate:
         format_sql: true
 
+# Configuración JWT protegida
 jwt:
   secret: ${JWT_SECRET}
+  expiration-ms: ${JWT_EXPIRATION_MS:3600000}
+
+# Semilla de datos (Configuración propia de tu Auth Service)
+smartlogix:
+  seed:
+    enabled: ${SMARTLOGIX_SEED_ENABLED:true}
+    admin-password: ${SMARTLOGIX_SEED_ADMIN_PASSWORD:admin123}
+    user-password: ${SMARTLOGIX_SEED_USER_PASSWORD:user123}
+    warehouse-password: ${SMARTLOGIX_SEED_WAREHOUSE_PASSWORD:bodega123}
 
 eureka:
   client:

@@ -4,6 +4,12 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# --- SEGURIDAD ---
+.env                # <--- CRÍTICO: Evita subir tus contraseñas a Git
+
+# --- PERSISTENCIA LOCAL ---
+postgres_data/      # <--- Evita subir los archivos físicos de la base de datos
+
 ### STS ###
 .apt_generated
 .classpath

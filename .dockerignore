@@ -4,5 +4,7 @@
 **/.vscode
 .git
 .gitignore
+.env          # <--- AGREGADO: No incluir secretos en la imagen construida
+postgres_data # <--- No incluir datos de la BD en la imagen
 README.md
 HELP.md

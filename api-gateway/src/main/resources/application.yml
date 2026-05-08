@@ -7,6 +7,11 @@ spring:
   cloud:
     gateway:
       routes:
+        # 1. Agregada ruta para Auth Service
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
         - id: inventory-service
           uri: lb://inventory-service
           predicates:
@@ -26,6 +31,11 @@ spring:
             allowedMethods: '*'
             allowedHeaders: '*'
 
+# 2. Agregada configuración de secreto JWT
+# Es vital que esta clave sea EXACTAMENTE la misma que use el auth-service
+jwt:
+  secret: ${JWT_SECRET:SmartLogixSuperSecretKeyForJWT2024PlatformMicroservicesArchitecture!!}
+
 eureka:
   client:
     service-url:
@@ -35,4 +45,5 @@ management:
   endpoints:
     web:
       exposure:
+        # He mantenido 'gateway' en la exposición de endpoints por si necesitas debugear rutas
         include: health,info,gateway
