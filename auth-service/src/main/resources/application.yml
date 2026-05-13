@@ -7,7 +7,7 @@ spring:
 
   datasource:
     # Usamos la misma lógica de variables que en Order
-    url: jdbc:postgresql://${DB_HOST:localhost}:5432/${AUTH_DB_NAME:auth_db}
+    url: jdbc:postgresql://${DB_HOST:smartlogix-db}:5432/${AUTH_DB_NAME:auth_db}
     driverClassName: org.postgresql.Driver
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD}
@@ -37,7 +37,7 @@ smartlogix:
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://discovery-service:8761/eureka/}
 
 management:
   endpoints:

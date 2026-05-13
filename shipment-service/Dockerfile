@@ -1,17 +1,15 @@
-FROM eclipse-temurin:17-jdk AS build
-WORKDIR /workspace
-
-COPY . .
-RUN sed -i 's/\r$//' mvnw && chmod +x mvnw && ./mvnw -q -DskipTests -pl shipment-service -am package
-
+# Usamos directamente el JRE (Runtime) ya que el JAR está listo
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 
+# Instalaciones de sistema y limpieza de caché de apt
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /workspace/shipment-service/target/shipment-service-1.0.0.jar app.jar
+# Copiamos el ejecutable desde tu carpeta target local
+COPY target/*.jar app.jar
 
+# Respetamos tu puerto original 8083
 EXPOSE 8083
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

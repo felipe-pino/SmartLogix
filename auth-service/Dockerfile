@@ -1,17 +1,16 @@
-FROM eclipse-temurin:17-jdk AS build
-WORKDIR /workspace
-
-COPY . .
-RUN sed -i 's/\r$//' mvnw && chmod +x mvnw && ./mvnw -q -DskipTests -pl auth-service -am package
-
+# Usamos la imagen ligera que ya tienes
 FROM eclipse-temurin:17-jre
+
+# Carpeta de la app
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
+# Instalamos curl para el healthcheck del discovery
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /workspace/auth-service/target/auth-service-1.0.0.jar app.jar
+# COPIAMOS el jar ejecutable.
+# Usamos esta sintaxis para asegurarnos de que solo agarre el JAR principal
+# y no el .original que a veces genera el repackage de Spring
+COPY target/auth-service-*.jar app.jar
 
-EXPOSE 8084
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+# Comando para arrancar
+ENTRYPOINT ["java", "-jar", "app.jar"]

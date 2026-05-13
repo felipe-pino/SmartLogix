@@ -1,45 +1,18 @@
 server:
   port: 8085
-
 spring:
   application:
     name: order-service
-
   datasource:
-    url: jdbc:postgresql://postgres-db:5432/order_db
-    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://${DB_HOST:smartlogix-db}:5432/order_db
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD}
-
   jpa:
     hibernate:
       ddl-auto: update
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-
 jwt:
   secret: ${JWT_SECRET}
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      shipmentService:
-        slidingWindowType: COUNT_BASED
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 5
-        failureRateThreshold: 50
-        waitDurationInOpenState: 10s
-
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://discovery-service:8761/eureka/}

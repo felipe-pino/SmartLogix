@@ -1,19 +1,16 @@
-FROM eclipse-temurin:17-jdk AS build
-WORKDIR /workspace
-
-COPY . .
-RUN sed -i 's/\r$//' mvnw && chmod +x mvnw && ./mvnw -q -DskipTests -pl inventory-service -am package
-
+# Usamos JRE directamente porque ya compilaste el .jar en IntelliJ
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 
+# Mantenemos tus instalaciones y limpieza
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /workspace/inventory-service/target/inventory-service-1.0.0.jar app.jar
+# Copiamos el JAR que ya existe en tu carpeta target local
+# Nota: Usamos comodín (*) por si la versión cambia (1.0.0, etc)
+COPY target/*.jar app.jar
 
+# Mantenemos tu puerto y comando original
 EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
-
-
