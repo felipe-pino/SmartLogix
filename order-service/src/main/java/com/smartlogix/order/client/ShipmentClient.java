@@ -22,7 +22,12 @@ public class ShipmentClient {
                         request,
                         ShipmentResponse.class
                 ),
-                throwable -> fallbackResponse(request)
+                throwable -> {
+                    // IMPRIMIR EL ERROR REAL EN DOCKER ANTES DE RESPONDER EL FALLBACK
+                    System.err.println("ERROR CRÍTICO LLAMANDO A SHIPMENT-SERVICE: " + throwable.getMessage());
+                    throwable.printStackTrace();
+                    return fallbackResponse(request);
+                }
         );
     }
 

@@ -4,8 +4,7 @@ services:
   postgres-db:
     image: postgres:15
     container_name: smartlogix-db
-    env_file:
-      - ./Credenciales/.env
+    env_file: .env
     environment:
       - POSTGRES_USER=${DB_USERNAME}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -16,9 +15,13 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
 
   discovery-service:
-    build: ./discovery-service
+    image: astralisss/discovery-service:latest
     container_name: discovery-service
     ports:
       - "8761:8761"
@@ -28,11 +31,15 @@ services:
       timeout: 5s
       retries: 10
     restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
 
   auth-service:
-    build: ./auth-service
+    image: astralisss/auth-service:latest
     container_name: auth-service
-    env_file: ./Credenciales/.env
+    env_file: .env
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -45,11 +52,15 @@ services:
     ports:
       - "8084:8084"
     restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
 
   inventory-service:
-    build: ./inventory-service
+    image: astralisss/inventory-service:latest
     container_name: inventory-service
-    env_file: ./Credenciales/.env
+    env_file: .env
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -62,11 +73,15 @@ services:
     ports:
       - "8081:8081"
     restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
 
   shipment-service:
-    build: ./shipment-service
+    image: astralisss/shipment-service:latest
     container_name: shipment-service
-    env_file: ./Credenciales/.env
+    env_file: .env
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -79,11 +94,15 @@ services:
     ports:
       - "8083:8083"
     restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
 
   order-service:
-    build: ./order-service
+    image: astralisss/order-service:latest
     container_name: order-service
-    env_file: ./Credenciales/.env
+    env_file: .env
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -96,11 +115,15 @@ services:
     ports:
       - "8085:8085"
     restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
 
   api-gateway:
-    build: ./api-gateway
+    image: astralisss/api-gateway:latest
     container_name: api-gateway
-    env_file: ./Credenciales/.env
+    env_file: .env
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -110,6 +133,10 @@ services:
     ports:
       - "8080:8080"
     restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
 
 volumes:
   postgres_data:
