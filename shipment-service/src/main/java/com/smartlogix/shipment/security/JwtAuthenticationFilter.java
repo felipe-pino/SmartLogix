@@ -43,7 +43,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (HttpMethod.OPTIONS.matches(request.getMethod())) {
             return true;
         }
+
         String path = request.getRequestURI();
+
+        // SOLUCIÓN: Si es una petición POST hacia /api/shipments, saltarse la validación del filtro JWT
+        if (HttpMethod.POST.matches(request.getMethod()) && path.equals("/api/shipments")) {
+            return true;
+        }
+
         return PUBLIC_PATHS.stream().anyMatch(publicPath -> matchesPath(path, publicPath));
     }
 

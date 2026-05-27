@@ -28,6 +28,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/info").permitAll()
+
+                        // SOLUCIÓN: Permite que se envíen peticiones POST para crear envíos sin token
+                        .requestMatchers(HttpMethod.POST, "/api/shipments").permitAll()
+
+                        // Todo lo demás sigue protegido y requiere token
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll()
                 )
