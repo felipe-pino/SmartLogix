@@ -12,6 +12,7 @@ import com.smartlogix.order.dto.CreateOrderRequest;
 import com.smartlogix.order.dto.OrderLineRequest;
 import com.smartlogix.order.dto.OrderLineResponse;
 import com.smartlogix.order.dto.OrderResponse;
+import com.smartlogix.order.dto.UpdateOrderStatusRequest; // Importamos el nuevo DTO
 import com.smartlogix.order.exception.OrderNotFoundException;
 import com.smartlogix.order.repository.PurchaseOrderRepository;
 import java.math.BigDecimal;
@@ -103,6 +104,37 @@ public class OrderService {
                 .map(this::toResponse)
                 .orElseThrow(() -> new OrderNotFoundException("Orden no encontrada: " + orderNumber));
     }
+
+    // ==========================================
+    //       MÉTODOS AGREGADOS PARA EL CRUD
+    // ==========================================
+
+    public OrderResponse updateOrderStatus(String orderNumber, UpdateOrderStatusRequest request) {
+        PurchaseOrder order = repository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new OrderNotFoundException("Orden no encontrada: " + orderNumber));
+
+        order.setStatus(request.status());
+
+        if (request.trackingCode() != null && !request.trackingCode().isBlank()) {
+            order.setTrackingCode(request.trackingCode());
+        }
+
+        if (request.reason() != null && !request.reason().isBlank()) {
+            order.setRejectionReason(request.reason());
+        }
+
+        return toResponse(repository.save(order));
+    }
+
+    public void deleteOrder(String orderNumber) {
+        PurchaseOrder order = repository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new OrderNotFoundException("Orden no encontrada: " + orderNumber));
+        repository.delete(order);
+    }
+
+    // ==========================================
+    //       MÉTODOS PRIVADOS (INTACTOS)
+    // ==========================================
 
     private BigDecimal calculateTotal(List<OrderLineRequest> lines) {
         return lines.stream()

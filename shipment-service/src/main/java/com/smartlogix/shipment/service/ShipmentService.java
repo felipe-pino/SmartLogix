@@ -4,6 +4,7 @@ import com.smartlogix.shipment.domain.Shipment;
 import com.smartlogix.shipment.domain.ShipmentStatus;
 import com.smartlogix.shipment.dto.CreateShipmentRequest;
 import com.smartlogix.shipment.dto.ShipmentResponse;
+import com.smartlogix.shipment.dto.UpdateShipmentRequest; // Importamos el nuevo DTO
 import com.smartlogix.shipment.exception.ShipmentNotFoundException;
 import com.smartlogix.shipment.factory.ShipmentPlan;
 import com.smartlogix.shipment.factory.ShipmentPlanFactory;
@@ -64,11 +65,43 @@ public class ShipmentService {
         return toResponse(shipment);
     }
 
+    // Método original (se mantiene por si acaso)
     public ShipmentResponse updateStatus(String trackingCode, ShipmentStatus status) {
         Shipment shipment = repository.findByTrackingCode(trackingCode.trim().toUpperCase())
                 .orElseThrow(() -> new ShipmentNotFoundException("No existe el envio " + trackingCode));
         shipment.setStatus(status);
         return toResponse(repository.save(shipment));
+    }
+
+    // ==========================================
+    //       MÉTODOS AGREGADOS PARA EL CRUD
+    // ==========================================
+
+    public ShipmentResponse updateShipment(String trackingCode, UpdateShipmentRequest request) {
+        Shipment shipment = repository.findByTrackingCode(trackingCode.trim().toUpperCase())
+                .orElseThrow(() -> new ShipmentNotFoundException("No existe el envio " + trackingCode));
+
+        shipment.setStatus(request.status());
+
+        if (request.carrier() != null && !request.carrier().isBlank()) {
+            shipment.setCarrier(request.carrier().trim());
+        }
+
+        if (request.routeCode() != null && !request.routeCode().isBlank()) {
+            shipment.setRouteCode(request.routeCode().trim());
+        }
+
+        if (request.estimatedDeliveryDate() != null) {
+            shipment.setEstimatedDeliveryDate(request.estimatedDeliveryDate());
+        }
+
+        return toResponse(repository.save(shipment));
+    }
+
+    public void deleteShipment(String trackingCode) {
+        Shipment shipment = repository.findByTrackingCode(trackingCode.trim().toUpperCase())
+                .orElseThrow(() -> new ShipmentNotFoundException("No existe el envio " + trackingCode));
+        repository.delete(shipment);
     }
 
     private ShipmentResponse toResponse(Shipment shipment) {

@@ -11,6 +11,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * Servicio de autenticación que orquesta el registro y el login.
  * Utiliza el AuthStrategyResolver (Strategy Pattern) para delegar
@@ -101,5 +104,66 @@ public class AuthService {
         String role = jwtProvider.getRoleFromToken(token);
 
         return new AuthResponse(token, username, role, jwtProvider.getExpirationMs());
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserDTO> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(user -> new UserDTO(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getEmail(),
+                        user.getRole().name(),
+                        user.isEnabled()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public UserDTO getUserById(Long id) {
+        UserEntity user = userRepository.findById(id)
+                .orElseThrow(() -> new AuthException("Usuario no encontrado con ID: " + id));
+
+        return new UserDTO(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().name(),
+                user.isEnabled()
+        );
+    }
+
+    public UserDTO updateUser(Long id, UpdateUserRequest request) {
+        UserEntity user = userRepository.findById(id)
+                .orElseThrow(() -> new AuthException("Usuario no encontrado con ID: " + id));
+
+        if (userRepository.existsByUsernameAndIdNot(request.username(), id)) {
+            throw new AuthException("El nombre de usuario ya está en uso: " + request.username());
+        }
+        if (userRepository.existsByEmailAndIdNot(request.email(), id)) {
+            throw new AuthException("El email ya está registrado: " + request.email());
+        }
+
+        user.setUsername(request.username().trim());
+        user.setEmail(request.email().trim().toLowerCase());
+        user.setRole(Role.valueOf(request.role()));
+        user.setEnabled(request.enabled());
+
+        userRepository.save(user);
+
+        return new UserDTO(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().name(),
+                user.isEnabled()
+        );
+    }
+
+    public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new AuthException("Usuario no encontrado con ID: " + id);
+        }
+        userRepository.deleteById(id);
     }
 }

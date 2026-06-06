@@ -3,9 +3,12 @@ package com.smartlogix.shipment.controller;
 import com.smartlogix.shipment.domain.ShipmentStatus;
 import com.smartlogix.shipment.dto.CreateShipmentRequest;
 import com.smartlogix.shipment.dto.ShipmentResponse;
+import com.smartlogix.shipment.dto.UpdateShipmentRequest; // Importamos el nuevo DTO
 import com.smartlogix.shipment.service.ShipmentService;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping; // Importamos
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus; // Importamos
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -45,5 +49,22 @@ public class ShipmentController {
             @PathVariable("trackingCode") String trackingCode,
             @RequestParam("value") ShipmentStatus value) {
         return shipmentService.updateStatus(trackingCode, value);
+    }
+
+    // ==========================================
+    //       ENDPOINTS AGREGADOS PARA EL CRUD
+    // ==========================================
+
+    @PatchMapping("/{trackingCode}")
+    public ShipmentResponse updateShipment(
+            @PathVariable("trackingCode") String trackingCode,
+            @Valid @RequestBody UpdateShipmentRequest request) {
+        return shipmentService.updateShipment(trackingCode, request);
+    }
+
+    @DeleteMapping("/{trackingCode}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteShipment(@PathVariable("trackingCode") String trackingCode) {
+        shipmentService.deleteShipment(trackingCode);
     }
 }

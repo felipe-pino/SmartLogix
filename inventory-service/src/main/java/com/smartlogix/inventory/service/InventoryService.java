@@ -2,6 +2,7 @@ package com.smartlogix.inventory.service;
 
 import com.smartlogix.inventory.domain.InventoryItem;
 import com.smartlogix.inventory.dto.CreateInventoryItemRequest;
+import com.smartlogix.inventory.dto.UpdateInventoryItemRequest; // Importamos el nuevo DTO
 import com.smartlogix.inventory.dto.InventoryAvailabilityResponse;
 import com.smartlogix.inventory.dto.InventoryItemResponse;
 import com.smartlogix.inventory.exception.InventoryNotFoundException;
@@ -106,6 +107,26 @@ public class InventoryService {
 
         item.setReservedQuantity(item.getReservedQuantity() - quantity);
         return toResponse(repository.save(item));
+    }
+
+    // ==========================================
+    //       MÉTODOS AGREGADOS PARA EL CRUD
+    // ==========================================
+
+    public InventoryItemResponse updateItem(String sku, UpdateInventoryItemRequest request) {
+        InventoryItem item = loadBySku(sku);
+
+        item.setProductName(request.productName().trim());
+        item.setAvailableQuantity(request.availableQuantity());
+        item.setReservedQuantity(request.reservedQuantity());
+        item.setReorderLevel(request.reorderLevel());
+
+        return toResponse(repository.save(item));
+    }
+
+    public void deleteItem(String sku) {
+        InventoryItem item = loadBySku(sku);
+        repository.delete(item);
     }
 
     private InventoryItem loadBySku(String sku) {

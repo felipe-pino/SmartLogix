@@ -5,11 +5,14 @@ import com.smartlogix.auth.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
- * Controlador REST para operaciones de autenticación.
- * Expone endpoints para registro, login y validación de tokens.
+ * Controlador REST para operaciones de autenticación y operaciones CRUD sobre usuarios.
+ * Mapeado utilizando estrictamente la estructura de DTOs (records) real de la aplicación.
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -22,20 +25,21 @@ public class AuthController {
     }
 
     /**
-     * POST /api/auth/register — Registra un nuevo usuario.
+     * POST /api/auth/register — [CREATE] Registra un nuevo usuario.
      */
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public RegisterResponse register(@Valid @RequestBody RegisterRequest request) {
-        return authService.register(request);
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
+        RegisterResponse response = authService.register(request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     /**
      * POST /api/auth/login — Autentica un usuario y devuelve un JWT.
      */
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request);
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -43,10 +47,44 @@ public class AuthController {
      * Utilizado internamente por el API Gateway.
      */
     @GetMapping("/validate")
-    public AuthResponse validateToken(
+    public ResponseEntity<AuthResponse> validateToken(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
             @RequestParam(name = "token", required = false) String token) {
-        return authService.validateToken(resolveToken(authorization, token));
+        AuthResponse response = authService.validateToken(resolveToken(authorization, token));
+        return ResponseEntity.ok(response);
+    }
+
+    // ==========================================
+    //       CRUD DE USUARIOS PARA EL FRONT
+    // ==========================================
+
+
+    @GetMapping("/users")
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
+        List<UserDTO> users = authService.getAllUsers();
+        return ResponseEntity.ok(users);
+    }
+
+
+    @GetMapping("/users/{id}")
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
+        UserDTO user = authService.getUserById(id);
+        return ResponseEntity.ok(user);
+    }
+
+    @PutMapping("/users/{id}")
+    public ResponseEntity<UserDTO> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateUserRequest request) {
+        UserDTO updatedUser = authService.updateUser(id, request);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        authService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 
     private String resolveToken(String authorization, String token) {
