@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { getOrders } from "../services/ordersService";
 import Navbar from "../components/Navbar";
+import LoadingSpinner from "../components/LoadingSpinner";
+import { formatCurrency, formatDate } from "../utils/formatters";
 import "../App.css";
 
 function OrdersPage() {
@@ -10,12 +12,11 @@ function OrdersPage() {
   useEffect(() => {
     async function loadOrders() {
       try {
-        // Fuerza una espera mínima de 3 segundos usando Promise.all
         const [data] = await Promise.all([
           getOrders(),
           new Promise((resolve) => setTimeout(resolve, 1000))
         ]);
-        setOrders(data);
+        setOrders(data || []);
       } catch (error) {
         console.error(error);
       } finally {
@@ -26,55 +27,98 @@ function OrdersPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="inventory-loading">
-        <div className="spinner"></div>
-        <h2>Cargando órdenes de compra...</h2>
-      </div>
-    );
+    return <LoadingSpinner message="Cargando órdenes de compra..." />;
   }
+
+  const totalMontoCalculado = orders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
 
   return (
     <div className="inventory-container">
       <Navbar />
 
-      <section className="inventory-stats" style={{ marginTop: "30px" }}>
+      <section className="inventory-stats">
         <div className="stat-card">
           <h3>Total Órdenes</h3>
           <p>{orders.length}</p>
         </div>
-        <div className="stat-card">
-          <h3>Monto Total</h3>
-          <p>${orders.reduce((acc, o) => acc + (o.totalAmount || 0), 0).toFixed(2)}</p>
+        <div className="stat-card blue-border">
+          <h3>Órdenes Pendientes</h3>
+          <p className="stat-text-blue">
+            {orders.filter((o) => o.status === "PENDING").length}
+          </p>
+        </div>
+        <div className="stat-card green-border">
+          <h3>Monto Global Generado</h3>
+          <p className="stat-text-green">{formatCurrency(totalMontoCalculado)}</p>
         </div>
       </section>
 
       <section className="inventory-table-section">
         <div className="table-header">
-          <h2>Órdenes de Compra</h2>
+          <h2>Registro de Órdenes</h2>
         </div>
-
-        <table className="inventory-table">
-          <thead>
-            <tr>
-              <th>ID Órden</th>
-              <th>Cliente</th>
-              <th>Fecha Creación</th>
-              <th>Monto Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order, index) => (
-              <tr key={order.id || index}>
-                <td className="sku">{order.orderNumber || order.id}</td>
-                <td>{order.customerName || "Cliente General"}</td>
-                {/* Formateo de fecha limpia localizado en español dd/mm/aaaa */}
-                <td>{order.createdAt ? new Date(order.createdAt).toLocaleDateString("es-ES") : "Reciente"}</td>
-                <td>${order.totalAmount || 0}</td>
+        <div className="table-wrapper">
+          <table className="inventory-table">
+            <thead>
+              <tr>
+                <th>N° Orden</th>
+                <th>Estado</th>
+                <th>Código Tracking</th>
+                <th>Detalle de Productos</th>
+                <th>Fecha de Creación</th>
+                <th>Monto Total</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {orders.map((order) => {
+                let statusClass = "status-unknown";
+                if (order.status === "PENDING") statusClass = "status-preparing";
+                if (order.status === "COMPLETED") statusClass = "status-delivered";
+                if (order.status === "CANCELLED") statusClass = "status-cancelled";
+
+                return (
+                  <tr key={order.orderNumber}>
+                    <td className="sku">{order.orderNumber}</td>
+                    
+                    <td>
+                      <span className={`status ${statusClass}`}>
+                        {order.status}
+                      </span>
+                    </td>
+
+                    <td>
+                      {order.trackingCode ? order.trackingCode : <span className="text-muted">Sin asignar</span>}
+                    </td>
+
+                    <td>
+                      {order.lines && order.lines.length > 0 ? (
+                        <ul className="order-lines-list">
+                          {order.lines.map((line, i) => (
+                            <li key={i}>
+                              {line.quantity}x <strong>{line.sku}</strong> 
+                              <span className="order-line-price">
+                                ({formatCurrency(line.unitPrice)})
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span className="text-muted">Sin detalles</span>
+                      )}
+                    </td>
+
+                    <td className="date-cell">{formatDate(order.createdAt)}</td>
+
+                    <td className="font-bold text-success">
+                      {formatCurrency(order.totalAmount || 0)}
+                    </td>
+
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

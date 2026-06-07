@@ -16,12 +16,7 @@ body {
 /* CONTENEDOR GENERAL */
 .container {
   min-height: 100vh;
-  background: linear-gradient(
-    135deg,
-    #0f172a,
-    #111827,
-    #1e293b
-  );
+  background: linear-gradient(135deg, #0f172a, #111827, #1e293b);
   padding: 40px;
 }
 
@@ -74,7 +69,7 @@ body {
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  transition: 0.2s;
+  transition: all 0.3s ease;
 }
 
 .nav-btn:hover {
@@ -86,6 +81,60 @@ body {
   background: rgba(56, 189, 248, 0.1);
   border-color: #38bdf8;
   color: #38bdf8;
+}
+
+/* Botón de Servicios Especial (Púrpura) */
+.nav-btn-services {
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  border: 1px solid #8b5cf6;
+  background-color: rgba(139, 92, 246, 0.1);
+  color: #a78bfa;
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
+  transition: all 0.3s ease;
+}
+
+.nav-btn-services:hover {
+  background-color: rgba(139, 92, 246, 0.2);
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.6);
+}
+
+.nav-btn-services.active {
+  background-color: #8b5cf6;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.6);
+}
+
+/* Botón de Cerrar Sesión Especial (Rojo) */
+.logout-btn-red {
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  border: 1px solid #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+  transition: all 0.3s ease;
+}
+
+.logout-btn-red:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.6);
+}
+
+/* Contenedor derecho de utilidades */
+.navbar-actions {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  border-left: 1px solid #334155;
+  padding-left: 20px;
 }
 
 /* ==========================================
@@ -117,7 +166,7 @@ body {
   font-size: 16px;
 }
 
-/* BOTÓN CERRAR SESIÓN */
+/* BOTÓN CERRAR SESIÓN (Antiguo / Genérico) */
 .logout-btn {
   background: linear-gradient(
     135deg,
@@ -170,6 +219,20 @@ body {
   font-size: 36px;
   font-weight: bold;
   color: #38bdf8;
+}
+
+/* Modificadores de bordes dinámicos para stats de envíos */
+.stat-card.blue-border {
+  border-left: 4px solid #3b82f6;
+}
+.stat-card.green-border {
+  border-left: 4px solid #10b981;
+}
+.stat-text-blue {
+  color: #60a5fa;
+}
+.stat-text-green {
+  color: #34d399;
 }
 
 /* ==========================================
@@ -250,23 +313,408 @@ body {
   font-weight: bold;
 }
 
-/* PILLS DE ESTADO */
-.status {
-  padding: 7px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
+.order-link-cell {
+  color: #a78bfa;
+  font-weight: 500;
 }
 
-.available {
+.carrier-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.text-muted {
+  color: #64748b;
+}
+
+.text-light {
+  color: #cbd5e1;
+}
+
+.date-cell {
+  font-size: 0.9em;
+  color: #94a3b8;
+}
+
+.delivery-cell {
+  font-weight: bold;
+  color: #f8fafc;
+}
+
+/* PILLS DE ESTADO CENTRALIZADOS */
+.status {
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-block;
+}
+
+/* Variaciones del estado de Inventario y Envíos */
+.available, .status-delivered {
+  background: rgba(4, 120, 87, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.status-transit {
+  background: rgba(30, 58, 138, 0.4);
+  color: #60a5fa;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+}
+
+.status-preparing {
+  background: rgba(120, 53, 15, 0.4);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.unavailable, .status-cancelled {
+  background: rgba(127, 29, 29, 0.4);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.status-unknown {
+  background: #1e293b;
+  color: #94a3b8;
+}
+
+/* ==========================================
+   NUEVOS ESTILOS CENTRALIZADOS: LOGIN & REGISTER
+   ========================================== */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+}
+
+.auth-card {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid #1e293b;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.auth-header h2 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #38bdf8;
+  margin-bottom: 6px;
+}
+
+.auth-header p {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-label {
+  display: flex;
+  flex-direction: column;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 8px;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: white;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: #38bdf8;
+}
+
+.auth-input:disabled {
+  background: #1e293b;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.auth-submit-btn {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border: none;
+  color: white;
+  padding: 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  transition: 0.3s;
+  margin-top: 10px;
+}
+
+.auth-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+}
+
+.auth-submit-btn.register {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+}
+
+.auth-submit-btn.register:hover:not(:disabled) {
+  box-shadow: 0 8px 20px rgba(22, 163, 74, 0.4);
+}
+
+.auth-submit-btn:disabled,
+.auth-submit-btn.loading {
+  background: #334155;
+  color: #64748b;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.auth-alert {
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.auth-alert.success {
   background: rgba(34, 197, 94, 0.15);
   color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
-.unavailable {
+.auth-alert.error {
   background: rgba(239, 68, 68, 0.15);
   color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
+
+.auth-footer {
+  text-align: center;
+  margin-top: 25px;
+}
+
+.auth-link-btn {
+  background: none;
+  border: none;
+  color: #38bdf8;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.auth-link-btn:hover:not(:disabled) {
+  color: #7dd3fc;
+}
+
+.auth-link-btn:disabled {
+  color: #475569;
+  cursor: not-allowed;
+}
+
+/* ==========================================
+   NUEVOS ESTILOS: SERVICES PAGE (LIMPIEZA DE INLINES)
+   ========================================== */
+
+/* Alertas de formulario internas (Services Page) */
+.services-form-alert {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.services-form-alert.success {
+  background: #052e16;
+  color: #4ade80;
+  border: 1px solid #16a34a;
+}
+
+.services-form-alert.error {
+  background: #450a0a;
+  color: #f87171;
+  border: 1px solid #b91c1c;
+}
+
+/* Acceso Denegado (Role Fallback) */
+.access-denied {
+  text-align: center;
+  padding-top: 100px;
+}
+.access-denied-title {
+  color: #f87171;
+  font-size: 40px;
+}
+.access-denied-text {
+  color: #94a3b8;
+  font-size: 18px;
+  margin-top: 20px;
+}
+.btn-mt-30 {
+  margin-top: 30px;
+}
+.text-highlight-blue {
+  color: #38bdf8;
+}
+
+/* Estructura general de grillas y separaciones (Services Page) */
+.services-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+}
+.grid-1-1 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.grid-1-1-1-auto {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 12px;
+  background: #0f172a;
+  padding: 15px;
+  border-radius: 8px;
+}
+.grid-autofit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 25px;
+}
+.grid-autofit-small {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+/* Flexbox utilities */
+.flex-col-gap-20 { display: flex; flex-direction: column; gap: 20px; }
+.flex-col-gap-35 { display: flex; flex-direction: column; gap: 35px; }
+.flex-row-gap-5 { display: flex; gap: 5px; }
+.flex-row-end-gap-15 { display: flex; gap: 15px; align-items: flex-end; }
+.flex-1 { flex: 1; }
+.col-span-all { grid-column: 1 / -1; }
+.mt-auto { margin-top: auto; }
+
+/* Contenedores tipo tarjeta para formularios */
+.service-card-form {
+  background: #0f172a;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.service-card-form.danger {
+  border: 1px solid #7f1d1d;
+  background: #450a0a;
+}
+.service-card-form.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Módulo 1: Inventario */
+.section-inventory { border-top: 4px solid #10b981; }
+.title-inventory { color: #10b981; }
+.btn-inventory {
+  max-width: 250px;
+  background: #10b981;
+  color: #064e3b;
+}
+
+/* Módulo 2: Órdenes */
+.section-orders { border-top: 4px solid #8b5cf6; }
+.title-orders { color: #8b5cf6; }
+.subtitle-orders {
+  border-bottom: 1px solid #334155;
+  padding-bottom: 8px;
+  color: #a78bfa;
+}
+.btn-orders { max-width: 250px; background: #8b5cf6; }
+.btn-orders-full { background: #8b5cf6; margin-top: auto; }
+.order-lines-box {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 8px;
+}
+.order-lines-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  align-items: center;
+}
+
+/* Módulo 3: Envíos */
+.section-shipments { border-top: 4px solid #f59e0b; }
+.title-shipments { color: #f59e0b; }
+.btn-shipments { background: #f59e0b; margin-top: auto; }
+.btn-shipments-status { background: #3b82f6; margin-top: auto; }
+.btn-shipments-save { background: #6366f1; max-width: 250px; align-self: flex-end; }
+.subtitle-common {
+  border-bottom: 1px solid #334155;
+  padding-bottom: 10px;
+}
+
+/* Módulo 4: Usuarios (Admin) */
+.section-users { border-top: 4px solid #38bdf8; }
+.title-users { color: #38bdf8; }
+.loading-text-users { color: #38bdf8; padding: 20px; text-align: center; }
+.users-table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #334155;
+}
+.users-table { width: 100%; border-collapse: collapse; }
+.users-table-head { background: #0f172a; }
+.users-th { text-align: left; padding: 15px; }
+.users-th-wide { text-align: left; padding: 15px; width: 280px; }
+.users-tr { background: #1e293b; border-bottom: 1px solid #1e293b; }
+.users-td { padding: 15px; }
+.users-td-muted { padding: 15px; color: #94a3b8; }
+
+/* Estados de Alerta / Peligro */
+.title-danger {
+  color: #fca5a5;
+  border-bottom: 1px solid #7f1d1d;
+  padding-bottom: 10px;
+}
+.text-danger-light { color: #fca5a5; }
+.input-danger { border-color: #991b1b; background: #7f1d1d; }
+.danger-warning-text { color: #fca5a5; font-size: 12px; margin: 5px 0; }
+.btn-danger-large { padding: 12px 24px; margin-top: auto; }
+.btn-danger-large-no-mt { padding: 12px 24px; }
+
+/* Clases Útiles Adicionales */
+.bg-slate-800 { background-color: #1e293b !important; }
+.bg-slate-900 { background-color: #0f172a !important; }
 
 /* ==========================================
    DISEÑO ADAPTABLE (RESPONSIVE)
@@ -282,6 +730,14 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
+  }
+
+  .navbar-actions {
+    border-left: none;
+    padding-left: 0;
+    border-top: 1px solid #334155;
+    padding-top: 15px;
+    justify-content: space-between;
   }
 
   .inventory-stats {

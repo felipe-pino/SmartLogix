@@ -1,22 +1,41 @@
-const API_URL = "http://localhost:8080";
+import { getInventoryRequest, updateInventoryItemRequest, deleteInventoryItemRequest } from "../api/inventoryApi";
 
+/**
+ * Recupera el listado completo de productos en inventario.
+ */
 export async function getInventory() {
-  const token = localStorage.getItem("token");
+  return await getInventoryRequest();
+}
 
-  const response = await fetch(
-    `${API_URL}/api/inventory/items`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Error al obtener inventario");
+/**
+ * Actualiza un producto en inventario validando restricciones de stock logístico.
+ */
+export async function updateInventoryItem(sku, itemData) {
+  if (!sku || !sku.trim()) {
+    throw new Error("El código SKU es obligatorio para actualizar el ítem.");
+  }
+  if (!itemData) {
+    throw new Error("No se proporcionaron datos para actualizar.");
+  }
+  
+  // REGLA DE NEGOCIO CRÍTICA: No permitir stock negativo en el sistema logístico inteligente
+  if (itemData.availableQuantity !== undefined && itemData.availableQuantity < 0) {
+    throw new Error("La cantidad disponible en inventario no puede ser un número negativo.");
+  }
+  
+  if (itemData.productName && !itemData.productName.trim()) {
+    throw new Error("El nombre del producto no puede transformarse en un texto vacío.");
   }
 
-  return await response.json();
+  return await updateInventoryItemRequest(sku, itemData);
+}
+
+/**
+ * Remueve un producto del inventario mediante su código SKU único.
+ */
+export async function deleteInventoryItem(sku) {
+  if (!sku || !sku.trim()) {
+    throw new Error("Se requiere obligatoriamente el código SKU para eliminar el ítem.");
+  }
+  return await deleteInventoryItemRequest(sku);
 }

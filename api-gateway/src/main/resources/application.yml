@@ -7,32 +7,45 @@ spring:
   cloud:
     gateway:
       routes:
-        # 1. Agregada ruta para Auth Service
+        # 1. Auth Service
         - id: auth-service
           uri: lb://auth-service
           predicates:
             - Path=/api/auth/**
+
         - id: inventory-service
           uri: lb://inventory-service
           predicates:
             - Path=/api/inventory/**
+
+        # 2. CORRECCIÓN PARA ÓRDENES (Evita el error de Recurso Estático)
         - id: order-service
           uri: lb://order-service
           predicates:
             - Path=/api/orders/**
+          filters:
+            - PreserveHostHeader # Mantiene las cabeceras originales intactas al redirigir
+
         - id: shipment-service
           uri: lb://shipment-service
           predicates:
             - Path=/api/shipments/**
+
+      # 3. CORRECCIÓN DE CORS (Declaración explícita para habilitar el método PATCH)
       globalcors:
         cors-configurations:
           '[/**]':
             allowedOrigins: '*'
-            allowedMethods: '*'
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
             allowedHeaders: '*'
 
-# 2. Agregada configuración de secreto JWT
-# Es vital que esta clave sea EXACTAMENTE la misma que use el auth-service
+# Configuración de secreto JWT
 jwt:
   secret: ${JWT_SECRET}
 
@@ -45,5 +58,4 @@ management:
   endpoints:
     web:
       exposure:
-        # He mantenido 'gateway' en la exposición de endpoints por si necesitas debugear rutas
         include: health,info,gateway

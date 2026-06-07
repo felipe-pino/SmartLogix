@@ -2,7 +2,7 @@ package com.smartlogix.order.controller;
 
 import com.smartlogix.order.dto.CreateOrderRequest;
 import com.smartlogix.order.dto.OrderResponse;
-import com.smartlogix.order.dto.UpdateOrderStatusRequest; // Importamos el nuevo DTO
+import com.smartlogix.order.dto.UpdateOrderStatusRequest;
 import com.smartlogix.order.service.OrderService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -46,7 +46,8 @@ public class OrderController {
     //       ENDPOINTS AGREGADOS PARA EL CRUD
     // ==========================================
 
-    @PatchMapping("/{orderNumber}/status")
+    // MODIFICADO: Se elimina "/status" para usar la ruta raíz del recurso de la orden
+    @PatchMapping("/{orderNumber}")
     public OrderResponse updateStatus(
             @PathVariable String orderNumber,
             @Valid @RequestBody UpdateOrderStatusRequest request) {

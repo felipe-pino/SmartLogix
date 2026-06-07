@@ -11,15 +11,21 @@ function Navbar() {
   };
 
   const activeClass = (path) => (location.pathname === path ? "nav-btn active" : "nav-btn");
+  
+  // Verifica si la pestaña de servicios está seleccionada
+  const servicesClass = location.pathname === "/services" ? "nav-btn-services active" : "nav-btn-services";
 
   return (
     <header className="inventory-header" style={{ borderBottom: "1px solid #1e293b", paddingBottom: "20px" }}>
+      
+      {/* 1. SECCIÓN DE TÍTULO */}
       <div>
-        <h1 style={{ fontSize: "32px" }}>SmartLogix Platform</h1>
-        <p>Sistema Central Integrado de Operaciones</p>
+        <h1 style={{ fontSize: "32px", margin: "0 0 5px 0" }}>SmartLogix Platform</h1>
+        <p style={{ margin: 0, color: "#94a3b8" }}>Sistema Central Integrado de Operaciones</p>
       </div>
 
-      <div style={{ display: "flex", gap: "12px" }}>
+      {/* 2. SECCIÓN PRINCIPAL DE NAVEGACIÓN */}
+      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
         <Link to="/inventory">
           <button className={activeClass("/inventory")}>Inventario</button>
         </Link>
@@ -29,11 +35,28 @@ function Navbar() {
         <Link to="/shipments">
           <button className={activeClass("/shipments")}>Envíos</button>
         </Link>
+        <Link to="/profile">
+          <button className={activeClass("/profile")}>Perfil</button>
+        </Link>
       </div>
 
-      <button className="logout-btn" onClick={handleLogout}>
-        Cerrar sesión
-      </button>
+      {/* 3. SECCIÓN DE ADMINISTRACIÓN Y SALIDA */}
+      <div className="navbar-actions">
+        
+        {/* Botón del Panel de Servicios (Púrpura con animación nativa por CSS) */}
+        <Link to="/services" style={{ textDecoration: "none" }}>
+          <button className={servicesClass}>
+            Panel de Servicios
+          </button>
+        </Link>
+
+        {/* Botón de Cerrar Sesión (Rojo con animación nativa por CSS) */}
+        <button className="logout-btn-red" onClick={handleLogout}>
+          Cerrar sesión
+        </button>
+
+      </div>
+
     </header>
   );
 }

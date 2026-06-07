@@ -24,7 +24,7 @@ public class UserEntity {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, columnDefinition = "varchar(30)")
     private Role role = Role.ROLE_USER;
 
     @Column(nullable = false)

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"; 
-import { login, saveLoginSession, normalizeSearchTerm } from "../services/authService"; 
+import { register, normalizeSearchTerm } from "../services/authService"; 
 import "../App.css";
 
-function LoginPage() {
+function RegisterPage() {
   const [credential, setCredential] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -22,20 +22,29 @@ function LoginPage() {
       return;
     }
 
+    if (password.length < 6) {
+      setMessage("La contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const response = await login({ credential: cleanCredential, password });
-
-      saveLoginSession(response);
-      setMessage("Login correcto");
+      
+      await register({ 
+        username: cleanCredential, 
+        email: `${cleanCredential}@smartlogix.com`, 
+        password: password 
+      });
+      
+      setMessage("¡Usuario registrado con éxito!");
 
       setTimeout(() => {
-        navigate("/inventory"); 
-      }, 800);
+        navigate("/"); 
+      }, 1500);
       
     } catch (error) {
       console.error(error);
-      setMessage(error.message || "Credenciales incorrectas");
+      setMessage(error.message || "Error en el registro");
     } finally {
       setIsLoading(false);
     }
@@ -45,16 +54,16 @@ function LoginPage() {
     <div className="auth-container">
       <main className="auth-card">
         <header className="auth-header">
-          <h2>SmartLogix</h2>
-          <p>Plataforma de Inventario Logístico</p>
+          <h2>Nuevo Registro</h2>
+          <p>Únete a la red SmartLogix</p>
         </header>
 
         <form onSubmit={handleSubmit} className="auth-form">
           <label className="auth-label">
-            Usuario
+            Nombre de Usuario
             <input
               type="text"
-              placeholder="Usuario o correo electrónico"
+              placeholder="Crea tu nombre de usuario"
               value={credential}
               disabled={isLoading}
               onChange={(event) => setCredential(event.target.value)}
@@ -66,7 +75,7 @@ function LoginPage() {
             Contraseña
             <input
               type="password"
-              placeholder="••••••••"
+              placeholder="Mínimo 6 caracteres"
               value={password}
               disabled={isLoading}
               onChange={(event) => setPassword(event.target.value)}
@@ -76,15 +85,15 @@ function LoginPage() {
 
           <button 
             type="submit" 
-            className={`auth-submit-btn ${isLoading ? "loading" : ""}`} 
+            className={`auth-submit-btn register ${isLoading ? "loading" : ""}`} 
             disabled={isLoading}
           >
-            {isLoading ? "Validando..." : "Iniciar Sesión"}
+            {isLoading ? "Registrando..." : "Registrarse"}
           </button>
         </form>
 
         {message && (
-          <div className={`auth-alert ${message.includes("correcto") ? "success" : "error"}`}>
+          <div className={`auth-alert ${message.includes("éxito") ? "success" : "error"}`}>
             {message}
           </div>
         )}
@@ -92,11 +101,11 @@ function LoginPage() {
         <footer className="auth-footer">
           <button 
             type="button" 
-            onClick={() => navigate("/register")} 
+            onClick={() => navigate("/")} 
             disabled={isLoading}
             className="auth-link-btn"
           >
-            ¿No tienes cuenta? Regístrate aquí
+            ¿Ya tienes cuenta? Inicia sesión aquí
           </button>
         </footer>
       </main>
@@ -104,4 +113,4 @@ function LoginPage() {
   );
 }
 
-export default LoginPage;
+export default RegisterPage;

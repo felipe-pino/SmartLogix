@@ -8,13 +8,18 @@ import {
 } from "react-router-dom";
 
 import Login from "./pages/loginPage";
+import RegisterPage from "./pages/RegisterPage"; 
 import InventoryPage from "./pages/InventoryPage";
-// Importamos las nuevas páginas
 import OrdersPage from "./pages/OrdersPage"; 
 import ShipmentsPage from "./pages/ShipmentsPage";
 
+// IMPORTAMOS LAS DOS NUEVAS PÁGINAS
+import ServicesPage from "./pages/ServicesPage";
+import ProfilePage from "./pages/ProfilePage";
+
+// VALIDADOR NATIVO SEGURO CON LOCALSTORAGE
 function ProtectedRoute({ children }) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token"); 
 
   if (!token) {
     return <Navigate to="/" replace />;
@@ -30,10 +35,15 @@ function App() {
 
         <Routes>
 
-          {/* Ruta Pública */}
+          {/* Rutas Públicas */}
           <Route
             path="/"
             element={<Login />}
+          />
+          
+          <Route
+            path="/register"
+            element={<RegisterPage />} 
           />
 
           {/* Rutas Protegidas de la aplicación */}
@@ -60,6 +70,25 @@ function App() {
             element={
               <ProtectedRoute>
                 <ShipmentsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* NUEVAS RUTAS PROTEGIDAS */}
+          <Route
+            path="/services"
+            element={
+              <ProtectedRoute>
+                <ServicesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />

@@ -138,5 +138,22 @@ services:
         limits:
           cpus: '0.50'
 
+  frontend:
+    image: astralisss/frontend-app:latest
+    container_name: frontend-smartlogix
+    build:
+      context: ./frontend/fron_smart_logix
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      api-gateway:
+        condition: service_started
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+
 volumes:
   postgres_data:

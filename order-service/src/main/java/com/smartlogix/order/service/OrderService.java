@@ -44,7 +44,7 @@ public class OrderService {
         // 1. Creamos la orden con los datos del request
         PurchaseOrder order = new PurchaseOrder();
         // Generamos un numero de orden simple para que no de error
-        order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8));
+        order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         order.setCustomerName(request.customerName());
         order.setCustomerEmail(request.customerEmail());
         order.setShippingAddress(request.shippingAddress());
@@ -53,7 +53,12 @@ public class OrderService {
 
         // 2. Procesamos las líneas y reservamos stock
         for (OrderLineRequest lineReq : request.lines()) {
-            // Llamada al cliente de inventario (aquí estaba el hueco)
+
+            // Lógica de negocio: Primero consultamos disponibilidad física real
+            // a través del RestTemplate para validar las reglas de stock antes de congelarlo.
+            inventoryClient.checkAvailability(lineReq.sku(), lineReq.quantity());
+
+            // Llamada al método real de tu cliente que ejecuta el POST de reserva en el microservicio
             inventoryClient.reserve(lineReq.sku(), lineReq.quantity());
 
             OrderLine line = new OrderLine();
