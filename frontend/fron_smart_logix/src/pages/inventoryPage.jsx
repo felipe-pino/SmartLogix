@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
 import { getInventory } from "../services/inventoryService";
-import Navbar from "../components/Navbar"; 
+import Navbar from "../components/Navbar";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { normalizeSearchTerm, formatDate } from "../utils/formatters"; 
+import { normalizeSearchTerm, formatDate } from "../utils/formatters";
+import { LuSearch, LuPackage2 } from "react-icons/lu"; // Iconos para UX
 import "../App.css";
 
 function InventoryPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(""); 
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     async function loadInventory() {
       try {
+        // Simulamos carga un poco más larga para apreciar el spinner futurista
         const [data] = await Promise.all([
           getInventory(),
-          new Promise((resolve) => setTimeout(resolve, 1000))
+          new Promise((resolve) => setTimeout(resolve, 1200))
         ]);
         setItems(data || []);
       } catch (error) {
@@ -30,98 +32,144 @@ function InventoryPage() {
   const filteredItems = items.filter((item) => {
     const term = normalizeSearchTerm(searchTerm);
     return (
-      item.productName?.toLowerCase().includes(term) ||
-      item.sku?.toLowerCase().includes(term) ||
-      item.warehouseCode?.toLowerCase().includes(term) 
+        item.productName?.toLowerCase().includes(term) ||
+        item.sku?.toLowerCase().includes(term) ||
+        item.warehouseCode?.toLowerCase().includes(term)
     );
   });
 
   if (loading) {
-    return <LoadingSpinner message="Cargando inventario..." />;
+    return <LoadingSpinner message="Sincronizando Núcleo de Inventario..." />;
   }
 
   return (
-    <div className="inventory-container">
-      <Navbar />
+      // Nueva estructura de layout
+      <div className="app-layout">
+        <Navbar />
 
-      <section className="inventory-stats">
-        <div className="stat-card">
-          <h3>Productos Registrados</h3>
-          <p>{items.length}</p>
-        </div>
-        <div className="stat-card">
-          <h3>Unidades Disponibles</h3>
-          <p>{items.reduce((acc, item) => acc + (item.availableQuantity || 0), 0)}</p>
-        </div>
-      </section>
+        <main className="main-content">
+          <div className="inventory-container anim-fade-up">
 
-      <section className="inventory-table-section">
-        <div className="table-header">
-          <h2>Catálogo de Productos</h2>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Buscar por nombre, SKU o bodega..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        
-        <div className="table-wrapper">
-          <table className="inventory-table">
-            <thead>
-              <tr>
-                <th>SKU</th>
-                <th>Producto</th>
-                <th>Bodega</th>
-                <th>Disponibles</th>
-                <th>Reservados</th>
-                <th>Reorden (Nivel)</th>
-                <th>Actualizado</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredItems.map((item) => {
-                const isAvailable = item.availableQuantity > 0;
-                const statusClass = isAvailable ? "available" : "unavailable";
-                const statusText = isAvailable ? "DISPONIBLE" : "AGOTADO";
+            <header className="inventory-header">
+              <h1>Panel de Inventario</h1>
+              <p>Monitoreo de existencias en tiempo real y flujo de mercancía.</p>
+            </header>
 
-                return (
-                  <tr key={item.sku}>
-                    <td className="sku">{item.sku}</td>
-                    <td className="font-bold">{item.productName}</td>
-                    <td className="text-light">{item.warehouseCode || "N/A"}</td>
-                    
-                    <td className={`font-bold ${item.availableQuantity > 0 ? "text-success" : "text-danger"}`}>
-                      {item.availableQuantity}
-                    </td>
-                    
-                    <td className="text-muted">
-                      {item.reservedQuantity || 0}
-                    </td>
-                    
-                    <td className="text-muted">
-                      {item.reorderLevel || 0}
-                    </td>
+            {/* Estadísticas con animación de escala */}
+            <section className="inventory-stats">
+              <div className="stat-card blue-border anim-scale-in delay-1">
+                <div className="stat-card-content">
+                  <h3>SKUs Registrados</h3>
+                  <p>{items.length}</p>
+                </div>
+              </div>
+              <div className="stat-card anim-scale-in delay-2">
+                <div className="stat-card-content">
+                  <h3>Unidades Totales</h3>
+                  <p>{items.reduce((acc, item) => acc + (item.availableQuantity || 0), 0)}</p>
+                </div>
+              </div>
+              {/* Tercera tarjeta opcional para balance visual */}
+              <div className="stat-card purple-border anim-scale-in delay-3">
+                <div className="stat-card-content">
+                  <h3>Valor Estimado</h3>
+                  <p>$--</p> {/* Lógica no implementada aún */}
+                </div>
+              </div>
+            </section>
 
-                    <td className="date-cell">
-                      {item.updatedAt ? formatDate(item.updatedAt) : "---"}
-                    </td>
+            {/* Sección de tabla con animación de subida */}
+            <section className="inventory-table-section anim-fade-up delay-3">
+              <div className="table-header">
+                <h2>Catálogo Global de Productos</h2>
 
-                    <td>
-                      <span className={`status ${statusClass}`}>
-                        {statusText}
-                      </span>
-                    </td>
+                {/* Buscador Moderno con Icono */}
+                <div className="search-container">
+                  <input
+                      type="text"
+                      className="search-input"
+                      placeholder="Buscar SKU, Nombre o Bodega..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  <LuSearch className="search-icon-field" />
+                </div>
+              </div>
+
+              <div className="table-scroll-wrapper">
+                <table className="inventory-table">
+                  <thead>
+                  <tr>
+                    <th>SKU</th>
+                    <th>Producto</th>
+                    <th>Ubicación</th>
+                    <th>Stock</th>
+                    <th>Reservado</th>
+                    <th>Pto. Reorden</th>
+                    <th>Última Actualización</th>
+                    <th>Estado</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+                  </thead>
+                  <tbody>
+                  {filteredItems.length === 0 ? (
+                      <tr>
+                        <td colSpan="8" style={{ textAlign: "center", padding: "60px", color: "#64748b" }}>
+                          <LuPackage2 style={{ fontSize: "40px", marginBottom: "15px", color: "#334155" }} />
+                          <p style={{fontWeight: 600, fontSize: '16px'}}>Niveles de inventario vacíos</p>
+                          <p style={{fontSize: '14px'}}>No se encontraron coincidencias para "{searchTerm}".</p>
+                        </td>
+                      </tr>
+                  ) : (
+                      filteredItems.map((item, index) => {
+                        const isAvailable = item.availableQuantity > 0;
+                        const statusClass = isAvailable ? "available" : "unavailable";
+                        const statusText = isAvailable ? "STOCK" : "AGOTADO";
+
+                        return (
+                            // Añadimos delay escalonado inline para las primeras filas
+                            <tr key={item.sku} className="anim-fade-up" style={{animationDelay: `${0.1 + (index * 0.03)}s`}}>
+                              <td><span className="sku">{item.sku}</span></td>
+                              <td style={{fontWeight: 700, color: 'white'}}>{item.productName}</td>
+                              <td>
+                                {item.warehouseCode ? (
+                                    <span className="text-light">{item.warehouseCode}</span>
+                                ) : (
+                                    <span className="badge-muted">N/A</span>
+                                )}
+                              </td>
+
+                              <td className={`font-bold ${item.availableQuantity > 0 ? "text-success" : "text-danger"}`} style={{fontSize: '16px'}}>
+                                {item.availableQuantity}
+                              </td>
+
+                              <td className="text-muted">
+                                {item.reservedQuantity || 0}
+                              </td>
+
+                              <td className="text-muted">
+                                {item.reorderLevel || 0}
+                              </td>
+
+                              <td className="date-cell">
+                                {item.updatedAt ? formatDate(item.updatedAt) : <span className="badge-muted">Sin registro</span>}
+                              </td>
+
+                              <td>
+                            <span className={`status ${statusClass}`}>
+                              {statusText}
+                            </span>
+                              </td>
+                            </tr>
+                        );
+                      })
+                  )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
   );
 }
 

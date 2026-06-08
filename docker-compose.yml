@@ -139,7 +139,7 @@ services:
           cpus: '0.50'
 
   frontend:
-    image: astralisss/frontend-app:latest
+    image: xlvxro/frontend:latest
     container_name: frontend-smartlogix
     build:
       context: ./frontend/fron_smart_logix
