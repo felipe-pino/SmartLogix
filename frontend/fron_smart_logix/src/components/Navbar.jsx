@@ -1,63 +1,69 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import "../App.css";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  LuLayoutDashboard, LuPackage, LuShoppingCart,
+  LuTruck, LuUser, LuLogOut, LuSettings
+} from "react-icons/lu";
 
 function Navbar() {
-  const navigate = useNavigate();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.clear();
-    navigate("/");
+    if (window.confirm("¿Deseas cerrar la sesión de SmartLogix?")) {
+      localStorage.removeItem("user");
+      navigate("/");
+    }
   };
 
-  const activeClass = (path) => (location.pathname === path ? "nav-btn active" : "nav-btn");
-  
-  // Verifica si la pestaña de servicios está seleccionada
-  const servicesClass = location.pathname === "/services" ? "nav-btn-services active" : "nav-btn-services";
+  const isActive = (path) => location.pathname === path ? "active" : "";
 
   return (
-    <header className="inventory-header" style={{ borderBottom: "1px solid #1e293b", paddingBottom: "20px" }}>
-      
-      {/* 1. SECCIÓN DE TÍTULO */}
-      <div>
-        <h1 style={{ fontSize: "32px", margin: "0 0 5px 0" }}>SmartLogix Platform</h1>
-        <p style={{ margin: 0, color: "#94a3b8" }}>Sistema Central Integrado de Operaciones</p>
-      </div>
+      <nav className="sidenav">
+        <div className="sidenav-brand">
+          Smart<span style={{color: 'white'}}>Logix</span>
+        </div>
 
-      {/* 2. SECCIÓN PRINCIPAL DE NAVEGACIÓN */}
-      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-        <Link to="/inventory">
-          <button className={activeClass("/inventory")}>Inventario</button>
-        </Link>
-        <Link to="/orders">
-          <button className={activeClass("/orders")}>Órdenes</button>
-        </Link>
-        <Link to="/shipments">
-          <button className={activeClass("/shipments")}>Envíos</button>
-        </Link>
-        <Link to="/profile">
-          <button className={activeClass("/profile")}>Perfil</button>
-        </Link>
-      </div>
+        <div className="sidenav-menu">
+          {/* Panel General ahora tiene su propia ruta independiente */}
+          <Link to="/dashboard" className={`nav-link ${isActive("/dashboard")}`}>
+            <LuLayoutDashboard className="nav-icon" />
+            <span>Panel General</span>
+          </Link>
 
-      {/* 3. SECCIÓN DE ADMINISTRACIÓN Y SALIDA */}
-      <div className="navbar-actions">
-        
-        {/* Botón del Panel de Servicios (Púrpura con animación nativa por CSS) */}
-        <Link to="/services" style={{ textDecoration: "none" }}>
-          <button className={servicesClass}>
-            Panel de Servicios
+          {/* Inventario ahora reclamará correctamente su estado activo */}
+          <Link to="/inventory" className={`nav-link ${isActive("/inventory")}`}>
+            <LuPackage className="nav-icon" />
+            <span>Inventario</span>
+          </Link>
+
+          <Link to="/orders" className={`nav-link ${isActive("/orders")}`}>
+            <LuShoppingCart className="nav-icon" />
+            <span>Órdenes</span>
+          </Link>
+
+          <Link to="/shipments" className={`nav-link ${isActive("/shipments")}`}>
+            <LuTruck className="nav-icon" />
+            <span>Envíos</span>
+          </Link>
+
+          <Link to="/services" className={`nav-link nav-btn-services ${isActive("/services")}`}>
+            <LuSettings className="nav-icon" />
+            <span>Servicios</span>
+          </Link>
+        </div>
+
+        <div className="sidenav-footer">
+          <Link to="/profile" className={`nav-link ${isActive("/profile")}`}>
+            <LuUser className="nav-icon" />
+            <span>Mi Perfil</span>
+          </Link>
+
+          <button onClick={handleLogout} className="nav-link logout-btn-side">
+            <LuLogOut className="nav-icon" />
+            <span>Cerrar Sesión</span>
           </button>
-        </Link>
-
-        {/* Botón de Cerrar Sesión (Rojo con animación nativa por CSS) */}
-        <button className="logout-btn-red" onClick={handleLogout}>
-          Cerrar sesión
-        </button>
-
-      </div>
-
-    </header>
+        </div>
+      </nav>
   );
 }
 

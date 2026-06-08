@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
-import { login, saveLoginSession, normalizeSearchTerm } from "../services/authService"; 
+import { useNavigate } from "react-router-dom";
+import { login, saveLoginSession, normalizeSearchTerm } from "../services/authService";
+import { LuFingerprint } from "react-icons/lu";
 import "../App.css";
 
 function LoginPage() {
   const [credential, setCredential] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false); 
-  
-  const navigate = useNavigate(); 
+  const [isLoading, setIsLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -18,7 +19,7 @@ function LoginPage() {
     const cleanCredential = normalizeSearchTerm(credential);
 
     if (!cleanCredential || !password.trim()) {
-      setMessage("Ingrese usuario y contraseña");
+      setMessage("Ingrese credenciales válidas");
       return;
     }
 
@@ -27,80 +28,82 @@ function LoginPage() {
       const response = await login({ credential: cleanCredential, password });
 
       saveLoginSession(response);
-      setMessage("Login correcto");
+      setMessage("Autenticación exitosa. Iniciando enlace...");
 
       setTimeout(() => {
-        navigate("/inventory"); 
-      }, 800);
-      
+        navigate("/inventory");
+      }, 1000);
+
     } catch (error) {
       console.error(error);
-      setMessage(error.message || "Credenciales incorrectas");
+      setMessage(error.message || "Acceso denegado: Credenciales incorrectas");
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div className="auth-container">
-      <main className="auth-card">
-        <header className="auth-header">
-          <h2>SmartLogix</h2>
-          <p>Plataforma de Inventario Logístico</p>
-        </header>
+      <div className="auth-page">
+        <main className="auth-card">
+          <header className="auth-header">
+            <LuFingerprint style={{ fontSize: "50px", color: "var(--color-primary)", marginBottom: "15px" }} />
+            <h2>SmartLogix</h2>
+            <p>Terminal de Acceso Logístico</p>
+          </header>
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <label className="auth-label">
-            Usuario
-            <input
-              type="text"
-              placeholder="Usuario o correo electrónico"
-              value={credential}
-              disabled={isLoading}
-              onChange={(event) => setCredential(event.target.value)}
-              className="auth-input"
-            />
-          </label>
+          <form onSubmit={handleSubmit} className="auth-form">
+            <label className="auth-label">
+              Identificador de Red
+              <input
+                  type="text"
+                  placeholder="Usuario o Email"
+                  value={credential}
+                  disabled={isLoading}
+                  onChange={(event) => setCredential(event.target.value)}
+                  className="auth-input"
+                  autoComplete="off"
+              />
+            </label>
 
-          <label className="auth-label">
-            Contraseña
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              disabled={isLoading}
-              onChange={(event) => setPassword(event.target.value)}
-              className="auth-input"
-            />
-          </label>
+            <label className="auth-label">
+              Clave de Seguridad
+              <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  disabled={isLoading}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="auth-input"
+              />
+            </label>
 
-          <button 
-            type="submit" 
-            className={`auth-submit-btn ${isLoading ? "loading" : ""}`} 
-            disabled={isLoading}
-          >
-            {isLoading ? "Validando..." : "Iniciar Sesión"}
-          </button>
-        </form>
+            <button
+                type="submit"
+                className={`auth-submit-btn ${isLoading ? "loading" : ""}`}
+                disabled={isLoading}
+            >
+              {isLoading ? "Validando..." : "Iniciar Sesión"}
+            </button>
+          </form>
 
-        {message && (
-          <div className={`auth-alert ${message.includes("correcto") ? "success" : "error"}`}>
-            {message}
-          </div>
-        )}
+          {message && (
+              <div className={`auth-alert ${message.includes("exitosa") ? "success" : "error"}`}>
+                {message}
+              </div>
+          )}
 
-        <footer className="auth-footer">
-          <button 
-            type="button" 
-            onClick={() => navigate("/register")} 
-            disabled={isLoading}
-            className="auth-link-btn"
-          >
-            ¿No tienes cuenta? Regístrate aquí
-          </button>
-        </footer>
-      </main>
-    </div>
+          <footer className="auth-footer">
+            <button
+                type="button"
+                onClick={() => navigate("/register")}
+                disabled={isLoading}
+                className="auth-link-btn"
+            >
+              ¿No tienes acceso? <span>Regístrate aquí</span>
+            </button>
+          </footer>
+        </main>
+      </div>
   );
 }
 

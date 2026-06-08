@@ -3,6 +3,7 @@ import { getOrders } from "../services/ordersService";
 import Navbar from "../components/Navbar";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { formatCurrency, formatDate } from "../utils/formatters";
+import { LuFileText, LuInbox } from "react-icons/lu";
 import "../App.css";
 
 function OrdersPage() {
@@ -27,100 +28,121 @@ function OrdersPage() {
   }, []);
 
   if (loading) {
-    return <LoadingSpinner message="Cargando órdenes de compra..." />;
+    return <LoadingSpinner message="Recuperando Registro de Órdenes..." />;
   }
 
   const totalMontoCalculado = orders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
+  const pendientes = orders.filter((o) => o.status === "PENDING").length;
 
   return (
-    <div className="inventory-container">
-      <Navbar />
+      <div className="app-layout">
+        <Navbar />
 
-      <section className="inventory-stats">
-        <div className="stat-card">
-          <h3>Total Órdenes</h3>
-          <p>{orders.length}</p>
-        </div>
-        <div className="stat-card blue-border">
-          <h3>Órdenes Pendientes</h3>
-          <p className="stat-text-blue">
-            {orders.filter((o) => o.status === "PENDING").length}
-          </p>
-        </div>
-        <div className="stat-card green-border">
-          <h3>Monto Global Generado</h3>
-          <p className="stat-text-green">{formatCurrency(totalMontoCalculado)}</p>
-        </div>
-      </section>
+        <main className="main-content">
+          <div className="inventory-container anim-fade-up">
 
-      <section className="inventory-table-section">
-        <div className="table-header">
-          <h2>Registro de Órdenes</h2>
-        </div>
-        <div className="table-wrapper">
-          <table className="inventory-table">
-            <thead>
-              <tr>
-                <th>N° Orden</th>
-                <th>Estado</th>
-                <th>Código Tracking</th>
-                <th>Detalle de Productos</th>
-                <th>Fecha de Creación</th>
-                <th>Monto Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => {
-                let statusClass = "status-unknown";
-                if (order.status === "PENDING") statusClass = "status-preparing";
-                if (order.status === "COMPLETED") statusClass = "status-delivered";
-                if (order.status === "CANCELLED") statusClass = "status-cancelled";
+            <header className="inventory-header">
+              <h1>Gestión de Órdenes</h1>
+              <p>Administración y seguimiento de pedidos de clientes.</p>
+            </header>
 
-                return (
-                  <tr key={order.orderNumber}>
-                    <td className="sku">{order.orderNumber}</td>
-                    
-                    <td>
-                      <span className={`status ${statusClass}`}>
-                        {order.status}
-                      </span>
-                    </td>
+            <section className="inventory-stats">
+              <div className="stat-card anim-scale-in delay-1">
+                <div className="stat-card-content">
+                  <h3>Total Órdenes</h3>
+                  <p>{orders.length}</p>
+                </div>
+              </div>
+              <div className={`stat-card anim-scale-in delay-2 ${pendientes > 0 ? "purple-border" : ""}`} style={pendientes > 0 ? {animation: 'pulseGlow 2s infinite', animationDelay: '1s'} : {}}>
+                <div className="stat-card-content">
+                  <h3>Pendientes</h3>
+                  <p className={pendientes > 0 ? "stat-text-blue" : ""}>
+                    {pendientes}
+                  </p>
+                </div>
+              </div>
+              <div className="stat-card green-border anim-scale-in delay-3">
+                <div className="stat-card-content">
+                  <h3>Ingreso Global</h3>
+                  <p className="stat-text-green" style={{fontSize: '36px'}}>{formatCurrency(totalMontoCalculado)}</p>
+                </div>
+              </div>
+            </section>
 
-                    <td>
-                      {order.trackingCode ? order.trackingCode : <span className="text-muted">Sin asignar</span>}
-                    </td>
-
-                    <td>
-                      {order.lines && order.lines.length > 0 ? (
-                        <ul className="order-lines-list">
-                          {order.lines.map((line, i) => (
-                            <li key={i}>
-                              {line.quantity}x <strong>{line.sku}</strong> 
-                              <span className="order-line-price">
-                                ({formatCurrency(line.unitPrice)})
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span className="text-muted">Sin detalles</span>
-                      )}
-                    </td>
-
-                    <td className="date-cell">{formatDate(order.createdAt)}</td>
-
-                    <td className="font-bold text-success">
-                      {formatCurrency(order.totalAmount || 0)}
-                    </td>
-
+            <section className="inventory-table-section anim-fade-up delay-3">
+              <div className="table-header">
+                <h2>Flujo de Pedidos</h2>
+              </div>
+              <div className="table-scroll-wrapper">
+                <table className="inventory-table">
+                  <thead>
+                  <tr>
+                    <th>ID Orden</th>
+                    <th>Estado</th>
+                    <th>Tracking</th>
+                    <th>Detalle</th>
+                    <th>Creación</th>
+                    <th>Total</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+                  </thead>
+                  <tbody>
+                  {orders.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" style={{ textAlign: "center", padding: "60px", color: "#64748b" }}>
+                          <LuInbox style={{ fontSize: "40px", marginBottom: "15px", color: "#334155" }} />
+                          <p style={{fontWeight: 600, fontSize: '16px'}}>Bandeja de entrada vacía</p>
+                          <p style={{fontSize: '14px'}}>No se han generado órdenes de compra aún.</p>
+                        </td>
+                      </tr>
+                  ) : (
+                      orders.map((order, index) => {
+                        let statusClass = "status-unknown";
+                        if (order.status === "PENDING") statusClass = "status-preparing";
+                        if (order.status === "COMPLETED") statusClass = "status-delivered";
+                        if (order.status === "CANCELLED") statusClass = "status-cancelled";
+
+                        return (
+                            <tr key={order.orderNumber} className="anim-fade-up" style={{animationDelay: `${0.3 + (index * 0.03)}s`}}>
+                              <td><span className="sku">{order.orderNumber}</span></td>
+
+                              <td>
+                            <span className={`status ${statusClass}`}>
+                              {order.status}
+                            </span>
+                              </td>
+
+                              <td className="order-link-cell">
+                                {order.trackingCode ? order.trackingCode : <span className="badge-muted">Por asignar</span>}
+                              </td>
+
+                              <td>
+                                {order.lines && order.lines.length > 0 ? (
+                                    <div className="text-light" style={{fontSize: '13px'}}>
+                                      <LuFileText style={{marginRight: '5px', color: '#a78bfa'}}/>
+                                      {order.lines.length} items registrados
+                                    </div>
+                                ) : (
+                                    <span className="badge-muted">Sin detalles</span>
+                                )}
+                              </td>
+
+                              <td className="date-cell">{formatDate(order.createdAt)}</td>
+
+                              <td className="font-bold text-success" style={{fontSize: '16px'}}>
+                                {formatCurrency(order.totalAmount || 0)}
+                              </td>
+
+                            </tr>
+                        );
+                      })
+                  )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
   );
 }
 
