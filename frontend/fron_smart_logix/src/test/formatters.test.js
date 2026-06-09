@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatCurrency, formatDate, normalizeSearchTerm } from "./formatters.js";
+import { formatCurrency, formatDate, normalizeSearchTerm } from "../utils/formatters.js";
 
 describe("Pruebas Unitarias - Módulo de Formateadores (Utils)", () => {
 

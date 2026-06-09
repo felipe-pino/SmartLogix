@@ -12,11 +12,21 @@ spring:
           uri: lb://auth-service
           predicates:
             - Path=/api/auth/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: authCircuitBreaker
+                fallbackUri: forward:/fallback/auth
 
         - id: inventory-service
           uri: lb://inventory-service
           predicates:
             - Path=/api/inventory/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: inventoryCircuitBreaker
+                fallbackUri: forward:/fallback/inventory
 
         # 2. CORRECCIÓN PARA ÓRDENES (Evita el error de Recurso Estático)
         - id: order-service
@@ -25,11 +35,20 @@ spring:
             - Path=/api/orders/**
           filters:
             - PreserveHostHeader # Mantiene las cabeceras originales intactas al redirigir
+            - name: CircuitBreaker
+              args:
+                name: orderCircuitBreaker
+                fallbackUri: forward:/fallback/orders
 
         - id: shipment-service
           uri: lb://shipment-service
           predicates:
             - Path=/api/shipments/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: shipmentCircuitBreaker
+                fallbackUri: forward:/fallback/shipments
 
       # 3. CORRECCIÓN DE CORS (Declaración explícita para habilitar el método PATCH)
       globalcors:
@@ -59,3 +78,24 @@ management:
     web:
       exposure:
         include: health,info,gateway
+
+# Configuración de tolerancia a fallos (Resilience4j)
+resilience4j:
+  circuitbreaker:
+    instances:
+      authCircuitBreaker:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000
+      inventoryCircuitBreaker:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000
+      orderCircuitBreaker:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000
+      shipmentCircuitBreaker:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000

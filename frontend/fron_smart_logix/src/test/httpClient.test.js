@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { httpRequest } from "./httpClient"; // Asegúrate de que la ruta apunte a tu archivo original
+import { httpRequest } from "../API/httpClient.js"; // Asegúrate de que la ruta apunte a tu archivo original
 
 describe("Pruebas Unitarias - Interceptor HTTP (httpClient)", () => {
   
