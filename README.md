@@ -1,87 +1,106 @@
-# SmartLogix - Plataforma Inteligente para Gestion Logistica (Microservicios)
+# SmartLogix - Plataforma Inteligente para Gestión Logística de eCommerce
 
-Proyecto de referencia para el caso semestral de Informatica.
-Incluye una arquitectura realista para PYMEs eCommerce con estos modulos:
+Plataforma de microservicios para PYMEs de eCommerce que resuelve los problemas de sistemas monolíticos: inconsistencias en la información, retrasos en la entrega y dificultades para manejar picos de demanda.
 
-- Gestion de Inventario (`inventory-service`)
+## Módulos del sistema
+
+- Autenticación y usuarios (`auth-service`)
+- Gestión de Inventario (`inventory-service`)
 - Procesamiento de Pedidos (`order-service`)
-- Coordinacion de Envios (`shipment-service`)
-
-Y componentes de infraestructura:
-
+- Coordinación de Envíos (`shipment-service`)
 - Descubrimiento de servicios (`discovery-service` con Eureka)
-- API Gateway (`api-gateway`)
+- API Gateway / BFF (`api-gateway`)
+- Frontend React + Vite (`frontend`)
 
-## Patrones de arquitectura implementados
+## Patrones de diseño implementados
 
-- `Service Discovery`: registro dinamico con Eureka.
-- `API Gateway`: punto unico de entrada para frontend o clientes.
-- `Database per Service`: cada microservicio usa su propia base H2.
-- `Factory Method`: en `shipment-service` para crear planes de envio por zona.
-- `Circuit Breaker`: en `order-service` para llamadas a `shipment-service`.
-- `Synchronous orchestration`: `order-service` coordina inventario + envio.
+- `Repository Pattern`: acceso a datos desacoplado con Spring Data JPA en todos los microservicios.
+- `DTO Pattern`: Java Records para transferencia de datos entre capas (Request/Response separados).
+- `Strategy Pattern`: en `auth-service` para autenticación por username o email intercambiable.
+- `Factory Method`: en `shipment-service` para crear planes de envío por zona geográfica (Norte/Sur/Centro).
+- `Chain of Responsibility`: `GlobalExceptionHandler` con `@RestControllerAdvice` en todos los microservicios.
+- `Filter Pattern`: `JwtAuthenticationFilter` con `OncePerRequestFilter` en todos los microservicios.
+- `Circuit Breaker`: en `order-service` y `api-gateway` con Resilience4j para tolerancia a fallos.
+- `Context Pattern`: `AuthContext` en el frontend para estado global de autenticación.
+- `Service Layer`: separación de capas API/Service en el frontend.
+
+## Patrones arquitectónicos implementados
+
+- `Service Discovery`: registro dinámico con Eureka.
+- `API Gateway / BFF`: punto único de entrada con enrutamiento, CORS y Circuit Breaker perimetral.
+- `Database per Service`: cada microservicio usa su propia base de datos PostgreSQL.
+- `Microservicios`: despliegue independiente por dominio de negocio.
+
+## Estrategia de Branching
+
+El proyecto usa **Feature Branch Workflow**:
+
+- `main`: rama estable de producción. Solo recibe cambios por Pull Request.
+- `CRUD`: rama de desarrollo del Parcial 2. Implementa operaciones CRUD completas en todos los microservicios.
+
+**Pull Request #1** abierto: `CRUD → main` con la implementación completa de endpoints PUT/PATCH/DELETE en todos los servicios y la ServicesPage del frontend.
 
 ## Estructura del repositorio
 
-- `discovery-service` (puerto `8761`)
-- `api-gateway` (puerto `8080`)
-- `inventory-service` (puerto `8081`)
-- `order-service` (puerto `8082`)
-- `shipment-service` (puerto `8083`)
+```
+smartlogix/
+├── discovery-service/     (puerto 8761)
+├── api-gateway/           (puerto 8080)
+├── auth-service/          (puerto 8084)
+├── inventory-service/     (puerto 8081)
+├── order-service/         (puerto 8085)
+├── shipment-service/      (puerto 8083)
+├── frontend/              (puerto 80 via Nginx)
+├── docker-compose.yml
+├── init.sql
+└── pom.xml                (POM padre multi-módulo)
+```
 
 ## Requisitos
 
 - Java 17
-- Maven Wrapper (`mvnw.cmd` ya incluido)
+- Maven Wrapper (`mvnw.cmd` incluido)
+- Docker Desktop
 
-## Compilar y validar
+## Compilar y ejecutar tests
 
 ```powershell
 .\mvnw.cmd clean test
 ```
 
-## Docker
-
-Todas las imagenes de los microservicios usan multi-stage build con Java 17:
-
-```dockerfile
-FROM eclipse-temurin:17-jdk AS build
-```
-
-Para levantar toda la plataforma con Docker Compose:
+## Docker (recomendado)
 
 ```powershell
 docker compose up --build -d
 docker compose ps
 ```
 
-Para detenerla:
+Para detener:
 
 ```powershell
 docker compose down
 ```
 
-Si Docker Desktop no esta ejecutandose, `docker compose` devolvera un error de conexion al daemon.
-
-Tambien puedes usar:
+También puedes usar el script:
 
 ```powershell
 .\run-docker.ps1
 ```
 
-## Ejecutar (opcion 1: manual)
+## Ejecutar manualmente (sin Docker)
 
-Iniciar en este orden (cada comando en terminal distinta):
+Iniciar en este orden, cada comando en una terminal distinta:
 
 ```powershell
 .\mvnw.cmd -pl discovery-service spring-boot:run
+.\mvnw.cmd -pl auth-service spring-boot:run
 .\mvnw.cmd -pl inventory-service spring-boot:run
 .\mvnw.cmd -pl shipment-service spring-boot:run
 .\mvnw.cmd -pl order-service spring-boot:run
 .\mvnw.cmd -pl api-gateway spring-boot:run
 ```
 
-## Ejecutar (opcion 2: script)
+También puedes usar el script:
 
 ```powershell
 .\run-services.ps1
@@ -89,91 +108,70 @@ Iniciar en este orden (cada comando en terminal distinta):
 
 ## URLs principales
 
-- Eureka Dashboard: `http://localhost:8761`
+- Frontend: `http://localhost`
 - API Gateway: `http://localhost:8080`
+- Eureka Dashboard: `http://localhost:8761`
 
-## Pruebas rapidas por Gateway
+## Credenciales de prueba
 
-### 1) Listar inventario inicial
-
-```powershell
-curl http://localhost:8080/api/inventory/items
-```
-
-### 2) Crear un pedido
-
-```powershell
-curl -X POST http://localhost:8080/api/orders `
-  -H "Content-Type: application/json" `
-  -d '{
-    "customerName": "Ana Torres",
-    "customerEmail": "ana@cliente.cl",
-    "shippingAddress": "Av. Providencia 1234, Santiago",
-    "lines": [
-      { "sku": "SKU-1001", "quantity": 2, "unitPrice": 29990 },
-      { "sku": "SKU-2001", "quantity": 1, "unitPrice": 14990 }
-    ]
-  }'
-```
-
-### 3) Ver pedidos
-
-```powershell
-curl http://localhost:8080/api/orders
-```
-
-### 4) Ver envios
-
-```powershell
-curl http://localhost:8080/api/shipments
-```
+| Usuario    | Contraseña  | Rol                    |
+|------------|-------------|------------------------|
+| admin      | admin123    | ROLE_ADMIN             |
+| usuario    | user123     | ROLE_USER              |
+| bodeguero  | bodega123   | ROLE_WAREHOUSE_MANAGER |
 
 ## Endpoints clave
 
-### Inventory Service
+### Auth Service (`/api/auth`)
+- `POST /api/auth/login` — autenticación por username o email
+- `POST /api/auth/register` — registro de nuevo usuario
+- `GET /api/auth/users` — listar usuarios (requiere token)
+- `PUT /api/auth/users/{id}` — actualizar usuario
+- `DELETE /api/auth/users/{id}` — eliminar usuario
 
-- `GET /api/inventory/items`
-- `POST /api/inventory/items`
-- `GET /api/inventory/items/{sku}`
-- `GET /api/inventory/items/{sku}/availability?quantity=...`
-- `PATCH|POST /api/inventory/items/{sku}/reserve?quantity=...`
-- `PATCH|POST /api/inventory/items/{sku}/release?quantity=...`
-- `PATCH|POST /api/inventory/items/{sku}/dispatch?quantity=...`
+### Inventory Service (`/api/inventory`)
+- `GET /api/inventory/items` — listar inventario
+- `POST /api/inventory/items` — crear producto
+- `PUT /api/inventory/items/{sku}` — actualizar producto
+- `DELETE /api/inventory/items/{sku}` — eliminar producto
+- `GET /api/inventory/items/{sku}/availability?quantity=N` — verificar disponibilidad
 
-### Order Service
+### Order Service (`/api/orders`)
+- `POST /api/orders` — crear orden (valida stock y solicita envío)
+- `GET /api/orders` — listar órdenes
+- `GET /api/orders/{orderNumber}` — buscar orden
+- `PATCH /api/orders/{orderNumber}` — actualizar estado
+- `DELETE /api/orders/{orderNumber}` — eliminar orden
 
-- `POST /api/orders`
-- `GET /api/orders`
-- `GET /api/orders/{orderNumber}`
+### Shipment Service (`/api/shipments`)
+- `POST /api/shipments` — crear envío
+- `GET /api/shipments` — listar envíos
+- `GET /api/shipments/{trackingCode}` — buscar envío
+- `PATCH /api/shipments/{trackingCode}` — actualizar envío completo
+- `PATCH /api/shipments/{trackingCode}/status?value=IN_TRANSIT` — actualizar estado
+- `DELETE /api/shipments/{trackingCode}` — eliminar envío
 
-### Shipment Service
+## Flujo funcional
 
-- `POST /api/shipments`
-- `GET /api/shipments`
-- `GET /api/shipments/{trackingCode}`
-- `PATCH /api/shipments/{trackingCode}/status?value=IN_TRANSIT`
+1. El frontend autentica al usuario contra `auth-service` y obtiene un JWT.
+2. El JWT se envía en cada petición al `api-gateway` (puerto 8080).
+3. El gateway valida el token, aplica Circuit Breaker y enruta al microservicio correspondiente.
+4. Para crear una orden: `order-service` consulta disponibilidad en `inventory-service`, reserva el stock, solicita el envío a `shipment-service` y retorna la orden con `trackingCode`.
+5. Si `shipment-service` no responde, el Circuit Breaker activa el fallback y la orden queda con estado `FAILED`.
 
-## Flujo funcional implementado
+## Pruebas unitarias
 
-1. Se crea orden en `order-service`.
-2. `order-service` valida disponibilidad en `inventory-service`.
-3. Si hay stock, reserva unidades en inventario.
-4. Solicita planificacion de envio en `shipment-service`.
-5. Devuelve orden con `trackingCode` y estado final.
+```powershell
+# Backend (JUnit 5 + MockMvc)
+.\mvnw.cmd -pl order-service test
 
-## Nota para evaluacion parcial
+# Frontend (Vitest)
+cd frontend/fron_smart_logix
+npm run test
+npm run coverage
+```
 
-Este proyecto ya cubre la base del Parcial 1 (arquitectura y microservicios).
-Se puede extender en Parcial 2/3 con:
-
-- autenticacion JWT,
-- trazabilidad distribuida,
-- mensajeria asincrona (Kafka/RabbitMQ),
-- frontend React/Vue,
-- despliegue con Docker Compose/Kubernetes.
-
-## Documento tecnico sugerido
-
-Se incluye una base de informe en:
-
-- `docs/INFORME-TECNICO.md`
+**Cobertura de tests:**
+- `OrderControllerTest.java`: GET /api/orders (200), GET orden inexistente (404), POST sin body (400)
+- `formatters.test.js`: formatCurrency, formatDate, normalizeSearchTerm — 7 casos
+- `httpClient.test.js`: inyección de token, interceptor 401, 204 No Content, error 500 — 4 casos
