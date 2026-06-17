@@ -2,12 +2,16 @@ package com.smartlogix.inventory.service;
 
 import com.smartlogix.inventory.domain.InventoryItem;
 import com.smartlogix.inventory.dto.CreateInventoryItemRequest;
-import com.smartlogix.inventory.dto.UpdateInventoryItemRequest; // Importamos el nuevo DTO
+import com.smartlogix.inventory.dto.UpdateInventoryItemRequest;
 import com.smartlogix.inventory.dto.InventoryAvailabilityResponse;
 import com.smartlogix.inventory.dto.InventoryItemResponse;
+import com.smartlogix.inventory.dto.InventoryPriceResponse;
 import com.smartlogix.inventory.exception.InventoryNotFoundException;
 import com.smartlogix.inventory.exception.InventoryOperationException;
 import com.smartlogix.inventory.repository.InventoryItemRepository;
+import com.smartlogix.inventory.strategy.LowRotationDiscountStrategy;
+import com.smartlogix.inventory.strategy.NormalPriceStrategy;
+import com.smartlogix.inventory.strategy.PriceStrategy;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +38,14 @@ public class InventoryService {
         item.setAvailableQuantity(request.initialQuantity());
         item.setReservedQuantity(0);
         item.setReorderLevel(request.reorderLevel());
+
+        // ===================================================================
+        // ASIGNACIÓN DE VALORES POR DEFECTO PARA LOS NUEVOS CAMPOS DE ROTACIÓN
+        // (Mantiene compatibilidad con el CreateInventoryItemRequest original)
+        // ===================================================================
+        item.setBasePrice(100.0);           // Precio base inicial predeterminado
+        item.setDaysInWarehouse(0);         // Todo producto nuevo ingresa con 0 días
+        item.setCriticalRotationDays(30);   // Umbral de 30 días para aplicar descuento
 
         return toResponse(repository.save(item));
     }
@@ -63,10 +75,12 @@ public class InventoryService {
         );
     }
 
+    public static final String MSG_CANTIDAD_MAYOR_CERO = "La cantidad debe ser mayor a 0.";
+
     public InventoryItemResponse reserve(String sku, int quantity) {
         InventoryItem item = loadBySku(sku);
         if (quantity <= 0) {
-            throw new InventoryOperationException("La cantidad debe ser mayor a 0.");
+            throw new InventoryOperationException(MSG_CANTIDAD_MAYOR_CERO);
         }
         if (item.getAvailableQuantity() < quantity) {
             throw new InventoryOperationException(
@@ -82,7 +96,7 @@ public class InventoryService {
     public InventoryItemResponse release(String sku, int quantity) {
         InventoryItem item = loadBySku(sku);
         if (quantity <= 0) {
-            throw new InventoryOperationException("La cantidad debe ser mayor a 0.");
+            throw new InventoryOperationException(MSG_CANTIDAD_MAYOR_CERO);
         }
         if (item.getReservedQuantity() < quantity) {
             throw new InventoryOperationException(
@@ -98,7 +112,7 @@ public class InventoryService {
     public InventoryItemResponse dispatch(String sku, int quantity) {
         InventoryItem item = loadBySku(sku);
         if (quantity <= 0) {
-            throw new InventoryOperationException("La cantidad debe ser mayor a 0.");
+            throw new InventoryOperationException(MSG_CANTIDAD_MAYOR_CERO);
         }
         if (item.getReservedQuantity() < quantity) {
             throw new InventoryOperationException(
@@ -128,6 +142,41 @@ public class InventoryService {
         InventoryItem item = loadBySku(sku);
         repository.delete(item);
     }
+
+    // ==========================================
+    //       MÉTODOS DE ESTRATEGIA (NUEVO AVANCE)
+    // ==========================================
+
+    @Transactional(readOnly = true)
+    public InventoryPriceResponse getDynamicCalculatedPrice(String sku) {
+        InventoryItem item = loadBySku(sku);
+
+        PriceStrategy strategy;
+        boolean hasDiscount = false;
+
+        // Evaluamos el estancamiento usando los campos del item
+        if (item.getDaysInWarehouse() >= item.getCriticalRotationDays()) {
+            strategy = new LowRotationDiscountStrategy(15.0); // 15% de descuento por baja rotación
+            hasDiscount = true;
+        } else {
+            strategy = new NormalPriceStrategy();
+        }
+
+        double finalPrice = strategy.calculatePrice(item.getBasePrice());
+
+        return new InventoryPriceResponse(
+                item.getSku(),
+                item.getProductName(),
+                item.getAvailableQuantity(),
+                item.getBasePrice(),
+                finalPrice,
+                hasDiscount
+        );
+    }
+
+    // ==========================================
+    //       MÉTODOS PRIVADOS DE APOYO
+    // ==========================================
 
     private InventoryItem loadBySku(String sku) {
         return repository.findBySku(sku.trim().toUpperCase())

@@ -1,17 +1,18 @@
 package com.smartlogix.inventory.controller;
 
 import com.smartlogix.inventory.dto.CreateInventoryItemRequest;
-import com.smartlogix.inventory.dto.UpdateInventoryItemRequest; // Importamos el nuevo DTO
+import com.smartlogix.inventory.dto.UpdateInventoryItemRequest;
 import com.smartlogix.inventory.dto.InventoryAvailabilityResponse;
 import com.smartlogix.inventory.dto.InventoryItemResponse;
+import com.smartlogix.inventory.dto.InventoryPriceResponse;
 import com.smartlogix.inventory.service.InventoryService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import java.util.List;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping; // Importamos DeleteMapping
-import org.springframework.web.bind.annotation.PutMapping;    // Importamos PutMapping
-import org.springframework.web.bind.annotation.ResponseStatus; // Importamos ResponseStatus
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -63,6 +64,15 @@ public class InventoryController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable("sku") String sku) {
         inventoryService.deleteItem(sku);
+    }
+
+    // ==========================================
+    //     ENDPOINT DE ESTRATEGIA (PRECIO DINÁMICO)
+    // ==========================================
+
+    @GetMapping("/items/{sku}/price")
+    public InventoryPriceResponse getDynamicPrice(@PathVariable("sku") String sku) {
+        return inventoryService.getDynamicCalculatedPrice(sku);
     }
 
     // ==========================================

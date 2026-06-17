@@ -37,6 +37,15 @@ public class InventoryItem {
     private int reorderLevel;
 
     @Column(nullable = false)
+    private double basePrice;
+
+    @Column(nullable = false)
+    private int daysInWarehouse;
+
+    @Column(nullable = false)
+    private int criticalRotationDays;
+
+    @Column(nullable = false)
     private OffsetDateTime updatedAt;
 
     @PrePersist
@@ -97,7 +106,35 @@ public class InventoryItem {
         this.reorderLevel = reorderLevel;
     }
 
+    public double getBasePrice() {
+        return basePrice;
+    }
+
+    public void setBasePrice(double basePrice) {
+        this.basePrice = basePrice;
+    }
+
+    public int getDaysInWarehouse() {
+        return daysInWarehouse;
+    }
+
+    public void setDaysInWarehouse(int daysInWarehouse) {
+        this.daysInWarehouse = daysInWarehouse;
+    }
+
+    public int getCriticalRotationDays() {
+        return criticalRotationDays;
+    }
+
+    public void setCriticalRotationDays(int criticalRotationDays) {
+        this.criticalRotationDays = criticalRotationDays;
+    }
+
     public OffsetDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public void setUpdatedAt(OffsetDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }
