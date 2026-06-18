@@ -17,11 +17,11 @@ export async function updateOrderStatus(orderNumber, statusDto) {
   if (!statusDto || !statusDto.status) {
     throw new Error("El objeto de estado de la orden es requerido.");
   }
-  
+
   // REGLA DE NEGOCIO: Validar que el estado enviado coincida estrictamente con los del dominio backend
-  const estadosValidos = ["PENDING", "PROCESSED", "SHIPPED", "DELIVERED", "CANCELLED"];
+  const estadosValidos = ["PENDING", "PROCESSED", "SHIPPED", "DELIVERED", "CANCELLED", "APPROVED", "SHIPMENT_REQUESTED", "FAILED"];
   const estadoNormalizado = statusDto.status.toUpperCase().trim();
-  
+
   if (!estadosValidos.includes(estadoNormalizado)) {
     throw new Error(`Estado inválido. Debe corresponder a uno de los siguientes: ${estadosValidos.join(", ")}`);
   }
@@ -35,7 +35,7 @@ export async function updateOrderStatus(orderNumber, statusDto) {
  */
 export async function deleteOrder(orderNumber) {
   if (!orderNumber) {
-    throw new Error("Se requiere un número de orden válido para efectuar la eliminación.");
+    throw new Error("El número de orden es mandatorio para eliminar el registro.");
   }
   return await deleteOrderRequest(orderNumber);
 }

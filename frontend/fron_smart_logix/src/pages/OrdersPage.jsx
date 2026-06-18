@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { getOrders } from "../services/ordersService";
 import Navbar from "../components/Navbar";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { formatCurrency, formatDate } from "../utils/formatters";
-import { LuFileText, LuInbox } from "react-icons/lu";
+import { LuFileText, LuInbox, LuChevronDown, LuChevronUp } from "react-icons/lu";
 import "../App.css";
 
 function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expandedOrderId, setExpandedOrderId] = useState(null); // Estado para expandir fila
 
   useEffect(() => {
     async function loadOrders() {
@@ -26,6 +27,14 @@ function OrdersPage() {
     }
     loadOrders();
   }, []);
+
+  const toggleExpandOrder = (orderNumber) => {
+    if (expandedOrderId === orderNumber) {
+      setExpandedOrderId(null);
+    } else {
+      setExpandedOrderId(orderNumber);
+    }
+  };
 
   if (loading) {
     return <LoadingSpinner message="Recuperando Registro de Órdenes..." />;
@@ -77,6 +86,7 @@ function OrdersPage() {
                 <table className="inventory-table">
                   <thead>
                   <tr>
+                    <th style={{ width: "40px" }}></th> {/* Columna extra para el icono */}
                     <th>ID Orden</th>
                     <th>Estado</th>
                     <th>Tracking</th>
@@ -88,7 +98,7 @@ function OrdersPage() {
                   <tbody>
                   {orders.length === 0 ? (
                       <tr>
-                        <td colSpan="6" style={{ textAlign: "center", padding: "60px", color: "#64748b" }}>
+                        <td colSpan="7" style={{ textAlign: "center", padding: "60px", color: "#64748b" }}>
                           <LuInbox style={{ fontSize: "40px", marginBottom: "15px", color: "#334155" }} />
                           <p style={{fontWeight: 600, fontSize: '16px'}}>Bandeja de entrada vacía</p>
                           <p style={{fontSize: '14px'}}>No se han generado órdenes de compra aún.</p>
@@ -101,38 +111,90 @@ function OrdersPage() {
                         if (order.status === "COMPLETED") statusClass = "status-delivered";
                         if (order.status === "CANCELLED") statusClass = "status-cancelled";
 
+                        const isExpanded = expandedOrderId === order.orderNumber;
+
                         return (
-                            <tr key={order.orderNumber} className="anim-fade-up" style={{animationDelay: `${0.3 + (index * 0.03)}s`}}>
-                              <td><span className="sku">{order.orderNumber}</span></td>
+                            <Fragment key={order.orderNumber}>
+                              <tr
+                                  className="anim-fade-up"
+                                  style={{animationDelay: `${0.3 + (index * 0.03)}s`, cursor: 'pointer'}}
+                                  onClick={() => toggleExpandOrder(order.orderNumber)}
+                              >
+                                <td style={{ textAlign: 'center', color: '#94a3b8' }}>
+                                  {isExpanded ? <LuChevronUp size={18} /> : <LuChevronDown size={18} />}
+                                </td>
 
-                              <td>
-                            <span className={`status ${statusClass}`}>
-                              {order.status}
-                            </span>
-                              </td>
+                                <td><span className="sku">{order.orderNumber}</span></td>
 
-                              <td className="order-link-cell">
-                                {order.trackingCode ? order.trackingCode : <span className="badge-muted">Por asignar</span>}
-                              </td>
+                                <td>
+                                  <span className={`status ${statusClass}`}>
+                                    {order.status}
+                                  </span>
+                                </td>
 
-                              <td>
-                                {order.lines && order.lines.length > 0 ? (
-                                    <div className="text-light" style={{fontSize: '13px'}}>
-                                      <LuFileText style={{marginRight: '5px', color: '#a78bfa'}}/>
-                                      {order.lines.length} items registrados
-                                    </div>
-                                ) : (
-                                    <span className="badge-muted">Sin detalles</span>
-                                )}
-                              </td>
+                                <td className="order-link-cell">
+                                  {order.trackingCode ? order.trackingCode : <span className="badge-muted">Por asignar</span>}
+                                </td>
 
-                              <td className="date-cell">{formatDate(order.createdAt)}</td>
+                                <td>
+                                  {order.lines && order.lines.length > 0 ? (
+                                      <div className="text-light" style={{fontSize: '13px'}}>
+                                        <LuFileText style={{marginRight: '5px', color: '#a78bfa'}}/>
+                                        {order.lines.length} items
+                                      </div>
+                                  ) : (
+                                      <span className="badge-muted">Sin detalles</span>
+                                  )}
+                                </td>
 
-                              <td className="font-bold text-success" style={{fontSize: '16px'}}>
-                                {formatCurrency(order.totalAmount || 0)}
-                              </td>
+                                <td className="date-cell">{formatDate(order.createdAt)}</td>
 
-                            </tr>
+                                <td className="font-bold text-success" style={{fontSize: '16px'}}>
+                                  {formatCurrency(order.totalAmount || 0)}
+                                </td>
+                              </tr>
+
+                              {/* Fila colapsable para ver el desglose del Backend */}
+                              {isExpanded && (
+                                  <tr style={{ backgroundColor: 'rgba(15, 23, 42, 0.4)' }}>
+                                    <td colSpan="7" style={{ padding: '15px 20px', borderBottom: '1px solid rgba(56, 189, 248, 0.15)' }}>
+                                      <div style={{ paddingLeft: '20px', borderLeft: '2px solid #a78bfa' }}>
+                                        <h4 style={{ color: '#a78bfa', marginBottom: '10px', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                          Desglose de Líneas (Precios Dinámicos)
+                                        </h4>
+                                        {order.lines && order.lines.length > 0 ? (
+                                            <table style={{ width: '100%', borderCollapse: 'collapse', color: '#f1f5f9', fontSize: '13px' }}>
+                                              <thead>
+                                              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
+                                                <th style={{ textAlign: 'left', padding: '8px' }}>SKU</th>
+                                                <th style={{ textAlign: 'center', padding: '8px' }}>Cantidad</th>
+                                                <th style={{ textAlign: 'right', padding: '8px' }}>Precio Unit. Cobrado</th>
+                                                <th style={{ textAlign: 'right', padding: '8px' }}>Subtotal</th>
+                                              </tr>
+                                              </thead>
+                                              <tbody>
+                                              {order.lines.map((line, idx) => (
+                                                  <tr key={idx} style={{ borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
+                                                    <td style={{ padding: '8px', fontWeight: 'bold' }}>{line.sku}</td>
+                                                    <td style={{ padding: '8px', textAlign: 'center' }}>{line.quantity}</td>
+                                                    <td style={{ padding: '8px', textAlign: 'right', color: '#34d399' }}>
+                                                      {formatCurrency(line.unitPrice)}
+                                                    </td>
+                                                    <td style={{ padding: '8px', textAlign: 'right', fontWeight: 'bold', color: '#38bdf8' }}>
+                                                      {formatCurrency(line.unitPrice * line.quantity)}
+                                                    </td>
+                                                  </tr>
+                                              ))}
+                                              </tbody>
+                                            </table>
+                                        ) : (
+                                            <p style={{ fontSize: '12px', color: '#94a3b8' }}>No hay líneas registradas.</p>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                              )}
+                            </Fragment>
                         );
                       })
                   )}

@@ -12,13 +12,13 @@ import com.smartlogix.order.dto.CreateOrderRequest;
 import com.smartlogix.order.dto.OrderLineRequest;
 import com.smartlogix.order.dto.OrderLineResponse;
 import com.smartlogix.order.dto.OrderResponse;
-import com.smartlogix.order.dto.UpdateOrderStatusRequest; // Importamos el nuevo DTO
+import com.smartlogix.order.dto.UpdateOrderStatusRequest;
 import com.smartlogix.order.exception.OrderNotFoundException;
 import com.smartlogix.order.repository.PurchaseOrderRepository;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID; // Import necesario para el ID de la orden
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,38 +41,51 @@ public class OrderService {
     }
 
     public OrderResponse createOrder(CreateOrderRequest request) {
-        // 1. Creamos la orden con los datos del request
         PurchaseOrder order = new PurchaseOrder();
-        // Generamos un numero de orden simple para que no de error
         order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         order.setCustomerName(request.customerName());
         order.setCustomerEmail(request.customerEmail());
         order.setShippingAddress(request.shippingAddress());
         order.setStatus(OrderStatus.PENDING);
-        order.setTotalAmount(calculateTotal(request.lines()));
 
-        // 2. Procesamos las líneas y reservamos stock
+        BigDecimal totalAcumulado = BigDecimal.ZERO;
+
         for (OrderLineRequest lineReq : request.lines()) {
-
-            // Lógica de negocio: Primero consultamos disponibilidad física real
-            // a través del RestTemplate para validar las reglas de stock antes de congelarlo.
+            // 1. Verificar disponibilidad física real
             inventoryClient.checkAvailability(lineReq.sku(), lineReq.quantity());
 
-            // Llamada al método real de tu cliente que ejecuta el POST de reserva en el microservicio
+            // 2. APLICACIÓN PROPUESTA 2: Lógica de precio dinámico por escasez
+            BigDecimal precioFinal = lineReq.unitPrice();
+            try {
+                InventoryClient.InventoryItemResponse inventoryData = inventoryClient.getItemBySku(lineReq.sku());
+                if (inventoryData != null && inventoryData.getAvailableQuantity() <= inventoryData.getReorderLevel()) {
+                    // Si el stock disponible cayó al nivel crítico o menor, se recarga el 20%
+                    precioFinal = precioFinal.multiply(BigDecimal.valueOf(1.20));
+                }
+            } catch (Exception e) {
+                System.err.println("No se pudo obtener el precio dinámico para el SKU " + lineReq.sku() + ". Usando precio base.");
+            }
+
+            // 3. Reservar en inventario
             inventoryClient.reserve(lineReq.sku(), lineReq.quantity());
 
+            // 4. Construir y asociar la línea de la orden
             OrderLine line = new OrderLine();
             line.setSku(lineReq.sku());
             line.setQuantity(lineReq.quantity());
-            line.setUnitPrice(lineReq.unitPrice());
+            line.setUnitPrice(precioFinal);
             order.addLine(line);
+
+            // Calcular el total de la línea basándonos en el precio final recalculado
+            BigDecimal totalLinea = precioFinal.multiply(BigDecimal.valueOf(lineReq.quantity()));
+            totalAcumulado = totalAcumulado.add(totalLinea);
         }
 
-        // 3. Cambiamos estado y guardamos por primera vez
+        // Fijamos el total de la orden con el acumulado dinámico
+        order.setTotalAmount(totalAcumulado);
         order.setStatus(OrderStatus.APPROVED);
         PurchaseOrder savedOrder = repository.save(order);
 
-        // 4. Intentamos solicitar el despacho
         try {
             ShipmentRequest shipRequest = new ShipmentRequest(
                     savedOrder.getOrderNumber(),
@@ -82,13 +95,11 @@ public class OrderService {
 
             ShipmentResponse shipResponse = shipmentClient.requestShipment(shipRequest);
 
-            // Si el cliente nos devuelve un tracking, lo guardamos
             if (shipResponse.trackingCode() != null) {
                 savedOrder.setTrackingCode(shipResponse.trackingCode());
                 savedOrder.setStatus(OrderStatus.SHIPMENT_REQUESTED);
             }
         } catch (Exception e) {
-            // Si falla el despacho, marcamos la orden pero no la borramos
             savedOrder.setStatus(OrderStatus.FAILED);
             savedOrder.setRejectionReason("Error en Shipment: " + e.getMessage());
         }
@@ -109,10 +120,6 @@ public class OrderService {
                 .map(this::toResponse)
                 .orElseThrow(() -> new OrderNotFoundException("Orden no encontrada: " + orderNumber));
     }
-
-    // ==========================================
-    //       MÉTODOS AGREGADOS PARA EL CRUD
-    // ==========================================
 
     public OrderResponse updateOrderStatus(String orderNumber, UpdateOrderStatusRequest request) {
         PurchaseOrder order = repository.findByOrderNumber(orderNumber)

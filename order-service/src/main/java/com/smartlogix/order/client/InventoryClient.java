@@ -26,8 +26,8 @@ public class InventoryClient {
             System.err.println("ERROR EN CHECK_AVAILABILITY (HTTP " + ex.getStatusCode() + "): " + ex.getResponseBodyAsString());
             throw new InventoryClientException("Error consultando disponibilidad: " + ex.getResponseBodyAsString(), ex);
         } catch (RestClientException ex) {
-            System.err.println("ERROR DE RED/BALANCEO EN CHECK_AVAILABILITY:");
-            ex.printStackTrace(); // <--- ESTO VA A OBLIGAR A SPRING A PINTAR TODA LA TRAZA EN CONSOLA
+            System.err.println("ERROR DE RED EN CHECK_AVAILABILITY:");
+            ex.printStackTrace();
             throw new InventoryClientException("Problema de conexión con inventario al chequear stock: " + ex.getMessage(), ex);
         }
     }
@@ -42,11 +42,9 @@ public class InventoryClient {
                     quantity
             );
         } catch (HttpStatusCodeException ex) {
-
             String errorReal = ex.getResponseBodyAsString();
             throw new InventoryClientException("El inventario rechazó la reserva de " + sku + ". ERROR REAL DEL SERVICIO: " + errorReal, ex);
         } catch (RestClientException ex) {
-
             throw new InventoryClientException("Problema de conexión con el inventario para " + sku + ": " + ex.getMessage(), ex);
         }
     }
@@ -65,5 +63,38 @@ public class InventoryClient {
         } catch (RestClientException ex) {
             throw new InventoryClientException("Problema de conexión con el inventario para " + sku + ": " + ex.getMessage(), ex);
         }
+    }
+
+    // =========================================================================
+    // IMPLEMENTACIÓN PROPUESTA 2: OBTENER EL STOCK Y REORDER LEVEL
+    // =========================================================================
+    public InventoryItemResponse getItemBySku(String sku) {
+        try {
+            return restTemplate.getForObject(
+                    "http://inventory-service/api/inventory/items/{sku}",
+                    InventoryItemResponse.class,
+                    sku
+            );
+        } catch (HttpStatusCodeException ex) {
+            throw new InventoryClientException("Error al obtener detalles del ítem " + sku + ": " + ex.getResponseBodyAsString(), ex);
+        } catch (RestClientException ex) {
+            throw new InventoryClientException("Problema de conexión al obtener detalles del ítem " + sku + ": " + ex.getMessage(), ex);
+        }
+    }
+
+    // DTO Estático interno para mapear la escasez
+    public static class InventoryItemResponse {
+        private String sku;
+        private Integer availableQuantity;
+        private Integer reorderLevel;
+
+        public InventoryItemResponse() {}
+
+        public String getSku() { return sku; }
+        public void setSku(String sku) { this.sku = sku; }
+        public Integer getAvailableQuantity() { return availableQuantity; }
+        public void setAvailableQuantity(Integer availableQuantity) { this.availableQuantity = availableQuantity; }
+        public Integer getReorderLevel() { return reorderLevel; }
+        public void setReorderLevel(Integer reorderLevel) { this.reorderLevel = reorderLevel; }
     }
 }
