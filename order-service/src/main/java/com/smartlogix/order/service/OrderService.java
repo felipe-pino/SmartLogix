@@ -54,16 +54,35 @@ public class OrderService {
             // 1. Verificar disponibilidad física real
             inventoryClient.checkAvailability(lineReq.sku(), lineReq.quantity());
 
-            // 2. APLICACIÓN PROPUESTA 2: Lógica de precio dinámico por escasez
+            // 2. LOGICA DE PRECIO DINAMICO DIRECTA
             BigDecimal precioFinal = lineReq.unitPrice();
             try {
                 InventoryClient.InventoryItemResponse inventoryData = inventoryClient.getItemBySku(lineReq.sku());
-                if (inventoryData != null && inventoryData.getAvailableQuantity() <= inventoryData.getReorderLevel()) {
-                    // Si el stock disponible cayó al nivel crítico o menor, se recarga el 20%
-                    precioFinal = precioFinal.multiply(BigDecimal.valueOf(1.20));
+                if (inventoryData != null) {
+                    java.time.LocalDateTime ultimaActualizacion = inventoryData.getUpdatedAt();
+
+                    if (ultimaActualizacion != null) {
+                        java.time.LocalDateTime ahora = java.time.LocalDateTime.now();
+                        long diasSinMover = java.time.temporal.ChronoUnit.DAYS.between(ultimaActualizacion, ahora);
+
+                        if (diasSinMover >= 15) {
+                            precioFinal = precioFinal.multiply(BigDecimal.valueOf(0.80));
+                            System.out.println("🔥 ¡Estocada! SKU " + lineReq.sku() + " estancado por " + diasSinMover + " dias. Descuento del 20% aplicado.");
+                        } else if (inventoryData.getAvailableQuantity() != null && inventoryData.getReorderLevel() != null) {
+                            if (inventoryData.getAvailableQuantity() <= inventoryData.getReorderLevel()) {
+                                precioFinal = precioFinal.multiply(BigDecimal.valueOf(1.20));
+                                System.out.println("⚠️ ¡Escasez! SKU " + lineReq.sku() + " con bajo stock. Recargo del 20% aplicado.");
+                            } else {
+                                System.out.println("✅ SKU " + lineReq.sku() + " con stock normal. Sin variacion de precio.");
+                            }
+                        }
+                    } else {
+                        System.err.println("❌ La fecha devuelta por el servicio de inventario llego NULA para SKU: " + lineReq.sku());
+                    }
                 }
             } catch (Exception e) {
-                System.err.println("No se pudo obtener el precio dinámico para el SKU " + lineReq.sku() + ". Usando precio base.");
+                System.err.println("❌ Error al procesar reglas de precio para SKU " + lineReq.sku() + ": " + e.getMessage());
+                e.printStackTrace();
             }
 
             // 3. Reservar en inventario
@@ -76,12 +95,10 @@ public class OrderService {
             line.setUnitPrice(precioFinal);
             order.addLine(line);
 
-            // Calcular el total de la línea basándonos en el precio final recalculado
             BigDecimal totalLinea = precioFinal.multiply(BigDecimal.valueOf(lineReq.quantity()));
             totalAcumulado = totalAcumulado.add(totalLinea);
         }
 
-        // Fijamos el total de la orden con el acumulado dinámico
         order.setTotalAmount(totalAcumulado);
         order.setStatus(OrderStatus.APPROVED);
         PurchaseOrder savedOrder = repository.save(order);
@@ -143,10 +160,6 @@ public class OrderService {
                 .orElseThrow(() -> new OrderNotFoundException("Orden no encontrada: " + orderNumber));
         repository.delete(order);
     }
-
-    // ==========================================
-    //       MÉTODOS PRIVADOS (INTACTOS)
-    // ==========================================
 
     private BigDecimal calculateTotal(List<OrderLineRequest> lines) {
         return lines.stream()

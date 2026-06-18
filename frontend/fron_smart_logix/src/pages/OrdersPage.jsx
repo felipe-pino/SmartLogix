@@ -62,7 +62,7 @@ function OrdersPage() {
                   <p>{orders.length}</p>
                 </div>
               </div>
-              <div className={`stat-card anim-scale-in delay-2 ${pendientes > 0 ? "purple-border" : ""}`} style={pendientes > 0 ? {animation: 'pulseGlow 2s infinite', animationDelay: '1s'} : {}}>
+              <div className={`stat-card anim-scale-in delay-2 ${pendientes > 0 ? "purple-border stat-pulse-glow" : ""}`}>
                 <div className="stat-card-content">
                   <h3>Pendientes</h3>
                   <p className={pendientes > 0 ? "stat-text-blue" : ""}>
@@ -73,7 +73,7 @@ function OrdersPage() {
               <div className="stat-card green-border anim-scale-in delay-3">
                 <div className="stat-card-content">
                   <h3>Ingreso Global</h3>
-                  <p className="stat-text-green" style={{fontSize: '36px'}}>{formatCurrency(totalMontoCalculado)}</p>
+                  <p className="stat-text-green stat-text-lg">{formatCurrency(totalMontoCalculado)}</p>
                 </div>
               </div>
             </section>
@@ -86,7 +86,7 @@ function OrdersPage() {
                 <table className="inventory-table">
                   <thead>
                   <tr>
-                    <th style={{ width: "40px" }}></th> {/* Columna extra para el icono */}
+                    <th className="col-expand"></th>
                     <th>ID Orden</th>
                     <th>Estado</th>
                     <th>Tracking</th>
@@ -98,10 +98,10 @@ function OrdersPage() {
                   <tbody>
                   {orders.length === 0 ? (
                       <tr>
-                        <td colSpan="7" style={{ textAlign: "center", padding: "60px", color: "#64748b" }}>
-                          <LuInbox style={{ fontSize: "40px", marginBottom: "15px", color: "#334155" }} />
-                          <p style={{fontWeight: 600, fontSize: '16px'}}>Bandeja de entrada vacía</p>
-                          <p style={{fontSize: '14px'}}>No se han generado órdenes de compra aún.</p>
+                        <td colSpan="7" className="empty-state-cell">
+                          <LuInbox className="empty-state-icon" />
+                          <p className="empty-state-title">Bandeja de entrada vacía</p>
+                          <p className="empty-state-desc">No se han generado órdenes de compra aún.</p>
                         </td>
                       </tr>
                   ) : (
@@ -116,11 +116,11 @@ function OrdersPage() {
                         return (
                             <Fragment key={order.orderNumber}>
                               <tr
-                                  className="anim-fade-up"
-                                  style={{animationDelay: `${0.3 + (index * 0.03)}s`, cursor: 'pointer'}}
+                                  className="anim-fade-up clickable-row"
+                                  style={{ animationDelay: `${0.3 + (index * 0.03)}s` }}
                                   onClick={() => toggleExpandOrder(order.orderNumber)}
                               >
-                                <td style={{ textAlign: 'center', color: '#94a3b8' }}>
+                                <td className="col-expand">
                                   {isExpanded ? <LuChevronUp size={18} /> : <LuChevronDown size={18} />}
                                 </td>
 
@@ -138,8 +138,8 @@ function OrdersPage() {
 
                                 <td>
                                   {order.lines && order.lines.length > 0 ? (
-                                      <div className="text-light" style={{fontSize: '13px'}}>
-                                        <LuFileText style={{marginRight: '5px', color: '#a78bfa'}}/>
+                                      <div className="text-light details-summary">
+                                        <LuFileText className="details-icon" />
                                         {order.lines.length} items
                                       </div>
                                   ) : (
@@ -149,46 +149,61 @@ function OrdersPage() {
 
                                 <td className="date-cell">{formatDate(order.createdAt)}</td>
 
-                                <td className="font-bold text-success" style={{fontSize: '16px'}}>
+                                <td className="font-bold text-success total-amount-cell">
                                   {formatCurrency(order.totalAmount || 0)}
                                 </td>
                               </tr>
 
                               {/* Fila colapsable para ver el desglose del Backend */}
                               {isExpanded && (
-                                  <tr style={{ backgroundColor: 'rgba(15, 23, 42, 0.4)' }}>
-                                    <td colSpan="7" style={{ padding: '15px 20px', borderBottom: '1px solid rgba(56, 189, 248, 0.15)' }}>
-                                      <div style={{ paddingLeft: '20px', borderLeft: '2px solid #a78bfa' }}>
-                                        <h4 style={{ color: '#a78bfa', marginBottom: '10px', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                  <tr className="expanded-row">
+                                    <td colSpan="7" className="expanded-cell">
+                                      <div className="expanded-content-wrapper">
+                                        <h4 className="expanded-title">
                                           Desglose de Líneas (Precios Dinámicos)
                                         </h4>
                                         {order.lines && order.lines.length > 0 ? (
-                                            <table style={{ width: '100%', borderCollapse: 'collapse', color: '#f1f5f9', fontSize: '13px' }}>
+                                            <table className="details-table">
                                               <thead>
-                                              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
-                                                <th style={{ textAlign: 'left', padding: '8px' }}>SKU</th>
-                                                <th style={{ textAlign: 'center', padding: '8px' }}>Cantidad</th>
-                                                <th style={{ textAlign: 'right', padding: '8px' }}>Precio Unit. Cobrado</th>
-                                                <th style={{ textAlign: 'right', padding: '8px' }}>Subtotal</th>
+                                              <tr className="details-table-head">
+                                                <th className="details-th-left">SKU</th>
+                                                <th className="details-th-center">Cantidad</th>
+                                                <th className="details-th-right">Precio Unit. Cobrado</th>
+                                                <th className="details-th-discount">Descuento</th>
+                                                <th className="details-th-right">Subtotal</th>
                                               </tr>
                                               </thead>
                                               <tbody>
-                                              {order.lines.map((line, idx) => (
-                                                  <tr key={idx} style={{ borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
-                                                    <td style={{ padding: '8px', fontWeight: 'bold' }}>{line.sku}</td>
-                                                    <td style={{ padding: '8px', textAlign: 'center' }}>{line.quantity}</td>
-                                                    <td style={{ padding: '8px', textAlign: 'right', color: '#34d399' }}>
-                                                      {formatCurrency(line.unitPrice)}
-                                                    </td>
-                                                    <td style={{ padding: '8px', textAlign: 'right', fontWeight: 'bold', color: '#38bdf8' }}>
-                                                      {formatCurrency(line.unitPrice * line.quantity)}
-                                                    </td>
-                                                  </tr>
-                                              ))}
+                                              {order.lines.map((line, idx) => {
+                                                // LÓGICA EN CALIENTE PARA VERIFICAR SI SE APLICÓ LA ESTOCADA (Precio base original era $200)
+                                                const tieneDescuento = line.sku === "SKU-1001" && line.unitPrice < 200;
+
+                                                return (
+                                                    <tr key={idx} className="details-tr-body">
+                                                      <td className="details-td-sku">{line.sku}</td>
+                                                      <td className="details-td-qty">{line.quantity}</td>
+                                                      <td className="details-td-price">
+                                                        {formatCurrency(line.unitPrice)}
+                                                      </td>
+                                                      <td className="details-td-center">
+                                                        {tieneDescuento ? (
+                                                            <span className="badge-discount">
+                                                                -20% Estocada
+                                                              </span>
+                                                        ) : (
+                                                            <span className="no-discount">—</span>
+                                                        )}
+                                                      </td>
+                                                      <td className="details-td-subtotal">
+                                                        {formatCurrency(line.unitPrice * line.quantity)}
+                                                      </td>
+                                                    </tr>
+                                                );
+                                              })}
                                               </tbody>
                                             </table>
                                         ) : (
-                                            <p style={{ fontSize: '12px', color: '#94a3b8' }}>No hay líneas registradas.</p>
+                                            <p className="details-empty">No hay líneas registradas.</p>
                                         )}
                                       </div>
                                     </td>

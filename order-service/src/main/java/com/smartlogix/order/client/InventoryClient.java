@@ -4,6 +4,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Component
 public class InventoryClient {
@@ -65,9 +67,6 @@ public class InventoryClient {
         }
     }
 
-    // =========================================================================
-    // IMPLEMENTACIÓN PROPUESTA 2: OBTENER EL STOCK Y REORDER LEVEL
-    // =========================================================================
     public InventoryItemResponse getItemBySku(String sku) {
         try {
             return restTemplate.getForObject(
@@ -82,19 +81,31 @@ public class InventoryClient {
         }
     }
 
-    // DTO Estático interno para mapear la escasez
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class InventoryItemResponse {
         private String sku;
+
+        @JsonProperty("availableQuantity")
         private Integer availableQuantity;
+
+        @JsonProperty("reorderLevel")
         private Integer reorderLevel;
+
+        @JsonProperty("updatedAt")
+        private java.time.LocalDateTime updatedAt;
 
         public InventoryItemResponse() {}
 
         public String getSku() { return sku; }
         public void setSku(String sku) { this.sku = sku; }
+
         public Integer getAvailableQuantity() { return availableQuantity; }
         public void setAvailableQuantity(Integer availableQuantity) { this.availableQuantity = availableQuantity; }
+
         public Integer getReorderLevel() { return reorderLevel; }
         public void setReorderLevel(Integer reorderLevel) { this.reorderLevel = reorderLevel; }
+
+        public java.time.LocalDateTime getUpdatedAt() { return updatedAt; }
+        public void setUpdatedAt(java.time.LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     }
 }

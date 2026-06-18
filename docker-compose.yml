@@ -139,7 +139,7 @@ services:
           cpus: '0.50'
 
   frontend:
-    image: xlvxro/frontend:latest
+    image: astralisss/frontend:latest
     container_name: frontend-smartlogix
     build:
       context: ./frontend/fron_smart_logix
@@ -153,7 +153,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.50'
 
 volumes:
   postgres_data:

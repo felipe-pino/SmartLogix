@@ -2,7 +2,7 @@ package com.smartlogix.inventory.service;
 
 import com.smartlogix.inventory.domain.InventoryItem;
 import com.smartlogix.inventory.dto.CreateInventoryItemRequest;
-import com.smartlogix.inventory.dto.UpdateInventoryItemRequest; // Importamos el nuevo DTO
+import com.smartlogix.inventory.dto.UpdateInventoryItemRequest;
 import com.smartlogix.inventory.dto.InventoryAvailabilityResponse;
 import com.smartlogix.inventory.dto.InventoryItemResponse;
 import com.smartlogix.inventory.exception.InventoryNotFoundException;
