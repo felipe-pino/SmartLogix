@@ -13,6 +13,7 @@ export async function getShipments() {
 export async function updateShipment(trackingCode, shipmentData) {
   if (!trackingCode || !trackingCode.trim()) {
     throw new Error("El código de seguimiento (trackingCode) es requerido.");
+
   }
   if (!shipmentData) {
     throw new Error("Los datos de actualización del envío no pueden estar vacíos.");
