@@ -39,6 +39,12 @@ public class InventoryItem {
     @Column(nullable = false)
     private OffsetDateTime updatedAt;
 
+    @Column(nullable = false)
+    private double basePrice = 0.0;
+
+    @Column(nullable = false)
+    private OffsetDateTime lastMovementDate = OffsetDateTime.now();
+
     @PrePersist
     @PreUpdate
     public void updateTimestamp() {
@@ -100,4 +106,12 @@ public class InventoryItem {
     public OffsetDateTime getUpdatedAt() {
         return updatedAt;
     }
+
+    public double getBasePrice() {return basePrice;}
+
+    public void setBasePrice(double basePrice) {this.basePrice = basePrice;}
+
+    public OffsetDateTime getLastMovementDate() {return lastMovementDate;}
+
+    public void setLastMovementDate(OffsetDateTime lastMovementDate) {this.lastMovementDate = lastMovementDate;}
 }

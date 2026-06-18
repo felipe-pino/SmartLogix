@@ -9,6 +9,8 @@ import com.smartlogix.inventory.exception.InventoryNotFoundException;
 import com.smartlogix.inventory.exception.InventoryOperationException;
 import com.smartlogix.inventory.repository.InventoryItemRepository;
 import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class InventoryService {
 
+    @Autowired
+    private PricingEngineService pricingEngineService;
     private final InventoryItemRepository repository;
 
     public InventoryService(InventoryItemRepository repository) {
@@ -135,6 +139,9 @@ public class InventoryService {
     }
 
     private InventoryItemResponse toResponse(InventoryItem item) {
+        double dynamicPrice = pricingEngineService.calculateDynamicPrice(item);
+        boolean hasDiscount = pricingEngineService.hasActiveDiscount(item);
+
         return new InventoryItemResponse(
                 item.getSku(),
                 item.getProductName(),
@@ -142,7 +149,10 @@ public class InventoryService {
                 item.getAvailableQuantity(),
                 item.getReservedQuantity(),
                 item.getReorderLevel(),
-                item.getUpdatedAt()
+                item.getUpdatedAt(),
+                item.getBasePrice(), // Se envía como originalPrice
+                dynamicPrice,        // Calculado por el motor
+                hasDiscount
         );
     }
 }

@@ -9,6 +9,8 @@ public record InventoryItemResponse(
         int availableQuantity,
         int reservedQuantity,
         int reorderLevel,
-        OffsetDateTime updatedAt
-) {
-}
+        OffsetDateTime updatedAt,
+        double originalPrice,
+        double dynamicPrice, // Precio calculado por el Strategy
+        boolean hasDiscount  // Flag para el frontend
+) {}

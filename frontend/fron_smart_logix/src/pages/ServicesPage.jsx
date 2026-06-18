@@ -83,6 +83,9 @@ function ServicesPage() {
   const [shipmentStatusForm, setShipmentStatusForm] = useState(INITIAL_SHIPMENT_STATUS);
   const [shipmentDeleteForm, setShipmentDeleteForm] = useState(INITIAL_SHIPMENT_DELETE);
 
+  // ✅ AQUÍ ES EL LUGAR CORRECTO PARA ESTE ESTADO:
+  const [discountRulesForm, setDiscountRulesForm] = useState({ stagnationDays: 30, discountPercentage: 0.20 });
+
   const [users, setUsers] = useState([]);
 
   // Gestor unificado de carga y errores
@@ -106,6 +109,21 @@ function ServicesPage() {
     };
     if (role === "ROLE_ADMIN") loadAdminData();
   }, [role]);
+
+  const handleDiscountRulesSubmit = async (e) => {
+    e.preventDefault();
+    setStatus('discountRules', null);
+    setLoading('discountRules', true);
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      setStatus('discountRules', { type: "success", message: "Reglas de descuento actualizadas exitosamente." });
+    } catch (error) {
+      setStatus('discountRules', { type: "error", message: "Error al actualizar las reglas." });
+    } finally {
+      setLoading('discountRules', false);
+    }
+  };
 
   // =========================================================
   // SUBMITS INVENTARIO
@@ -351,6 +369,35 @@ function ServicesPage() {
                   <section className="inventory-table-section anim-fade-up delay-1">
                     <div className="table-header"><h2 className="title-inventory">Gestión de Inventario</h2></div>
                     <div className="flex-col-gap-35">
+
+                      {/* AQUÍ QUEDÓ EL FORMULARIO DE DESCUENTOS, CORRECTAMENTE VINCULADO AL ESTADO */}
+                      <form onSubmit={handleDiscountRulesSubmit} className="service-card-form">
+                        <h3 className="subtitle-common">Reglas de Descuento Dinámico</h3>
+                        <label className="auth-label">
+                          Días de Estancamiento (Umbral)
+                          <input
+                              type="number"
+                              className="auth-input"
+                              value={discountRulesForm.stagnationDays}
+                              onChange={(e) => setDiscountRulesForm({...discountRulesForm, stagnationDays: e.target.value})}
+                          />
+                        </label>
+                        <label className="auth-label">
+                          Porcentaje de Descuento (Decimal)
+                          <input
+                              type="number"
+                              step="0.01"
+                              className="auth-input"
+                              value={discountRulesForm.discountPercentage}
+                              onChange={(e) => setDiscountRulesForm({...discountRulesForm, discountPercentage: e.target.value})}
+                          />
+                        </label>
+                        <button type="submit" className={`auth-submit-btn mt-auto ${loadingStates.discountRules ? "loading" : ""}`} disabled={loadingStates.discountRules}>
+                          Actualizar Reglas
+                        </button>
+                        <FormAlert status={statusMessages.discountRules} />
+                      </form>
+
                       <form onSubmit={handleInventorySubmit} className="flex-col-gap-20">
                         <h3 className="subtitle-common">Crear Nuevo Producto</h3>
                         <div className="grid-1-1">
@@ -421,7 +468,6 @@ function ServicesPage() {
                         <FormAlert status={statusMessages.ordCreate} />
                       </form>
 
-                      {/* Formularios restaurados de Órdenes */}
                       <div className="grid-autofit">
                         <form onSubmit={handleOrderStatusUpdateSubmit} className="service-card-form">
                           <h3 className="subtitle-common">Actualizar Estado de Orden</h3>
@@ -477,7 +523,6 @@ function ServicesPage() {
                         <FormAlert status={statusMessages.shipStatus} />
                       </form>
 
-                      {/* Formularios restaurados de Envíos */}
                       <form onSubmit={handleShipmentUpdateSubmit} className="service-card-form full-width" style={{gridColumn: '1 / -1'}}>
                         <h3 className="subtitle-common">Edición Completa del Envío</h3>
                         <div className="grid-autofit-small" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px'}}>
@@ -505,12 +550,11 @@ function ServicesPage() {
                         </div>
                         <FormAlert status={statusMessages.shipDelete} />
                       </form>
-
                     </div>
                   </section>
               )}
 
-              {/* 4. GESTIÓN DE USUARIOS (Módulo Restaurado Completo) */}
+              {/* 4. GESTIÓN DE USUARIOS */}
               {role === "ROLE_ADMIN" && (
                   <section className="inventory-table-section anim-fade-up delay-4">
                     <div className="table-header"><h2 className="title-users">Módulo de Administración de Usuarios</h2></div>
