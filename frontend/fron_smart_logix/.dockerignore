@@ -1,4 +1,10 @@
 node_modules
+dist
 .git
 .production
 npm-debug.log
+.env
+.env.local
+*.local
+.vscode
+.idea

@@ -31,7 +31,7 @@ function LoginPage() {
       setMessage("Autenticación exitosa. Iniciando enlace...");
 
       setTimeout(() => {
-        navigate("/inventory");
+        navigate("/store");
       }, 1000);
 
     } catch (error) {

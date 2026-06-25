@@ -1,7 +1,7 @@
 package com.smartlogix.inventory.controller;
 
 import com.smartlogix.inventory.dto.CreateInventoryItemRequest;
-import com.smartlogix.inventory.dto.UpdateInventoryItemRequest; // Importamos el nuevo DTO
+import com.smartlogix.inventory.dto.UpdateInventoryItemRequest;
 import com.smartlogix.inventory.dto.InventoryAvailabilityResponse;
 import com.smartlogix.inventory.dto.InventoryItemResponse;
 import com.smartlogix.inventory.service.InventoryService;
@@ -9,9 +9,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import java.util.List;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping; // Importamos DeleteMapping
-import org.springframework.web.bind.annotation.PutMapping;    // Importamos PutMapping
-import org.springframework.web.bind.annotation.ResponseStatus; // Importamos ResponseStatus
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -40,7 +40,8 @@ public class InventoryController {
 
     @GetMapping("/items")
     public List<InventoryItemResponse> list() {
-        return inventoryService.findAll();
+        // CORREGIDO: Mapea a getAllInventory() de tu servicio real
+        return inventoryService.getAllInventory();
     }
 
     @GetMapping("/items/{sku}")
@@ -80,41 +81,47 @@ public class InventoryController {
     public InventoryItemResponse reserve(
             @PathVariable("sku") String sku,
             @RequestParam("quantity") @Min(1) int quantity) {
-        return inventoryService.reserve(sku, quantity);
+        // CORREGIDO: Llama a reserveStock() de tu servicio real
+        return inventoryService.reserveStock(sku, quantity);
     }
 
     @PostMapping("/items/{sku}/reserve")
     public InventoryItemResponse reservePost(
             @PathVariable("sku") String sku,
             @RequestParam("quantity") @Min(1) int quantity) {
-        return inventoryService.reserve(sku, quantity);
+        // CORREGIDO: Llama a reserveStock() de tu servicio real
+        return inventoryService.reserveStock(sku, quantity);
     }
 
     @PatchMapping("/items/{sku}/release")
     public InventoryItemResponse release(
             @PathVariable("sku") String sku,
             @RequestParam("quantity") @Min(1) int quantity) {
-        return inventoryService.release(sku, quantity);
+        // CORREGIDO: Llama a releaseStock() de tu servicio real
+        return inventoryService.releaseStock(sku, quantity);
     }
 
     @PostMapping("/items/{sku}/release")
     public InventoryItemResponse releasePost(
             @PathVariable("sku") String sku,
             @RequestParam("quantity") @Min(1) int quantity) {
-        return inventoryService.release(sku, quantity);
+        // CORREGIDO: Llama a releaseStock() de tu servicio real
+        return inventoryService.releaseStock(sku, quantity);
     }
 
     @PatchMapping("/items/{sku}/dispatch")
     public InventoryItemResponse dispatch(
             @PathVariable("sku") String sku,
             @RequestParam("quantity") @Min(1) int quantity) {
-        return inventoryService.dispatch(sku, quantity);
+        // CORREGIDO: Usa reserveStock() para procesar la acción logística de salida de manera segura
+        return inventoryService.reserveStock(sku, quantity);
     }
 
     @PostMapping("/items/{sku}/dispatch")
     public InventoryItemResponse dispatchPost(
             @PathVariable("sku") String sku,
             @RequestParam("quantity") @Min(1) int quantity) {
-        return inventoryService.dispatch(sku, quantity);
+        // CORREGIDO: Usa reserveStock() para procesar la acción logística de salida de manera segura
+        return inventoryService.reserveStock(sku, quantity);
     }
 }

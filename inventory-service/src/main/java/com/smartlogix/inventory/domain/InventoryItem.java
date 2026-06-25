@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.math.BigDecimal; // AGREGADO
 import java.time.OffsetDateTime;
 
 @Entity
@@ -35,6 +36,9 @@ public class InventoryItem {
 
     @Column(nullable = false)
     private int reorderLevel;
+
+    @Column(nullable = false) // AGREGADO
+    private BigDecimal price;
 
     @Column(nullable = false)
     private OffsetDateTime updatedAt;
@@ -95,6 +99,15 @@ public class InventoryItem {
 
     public void setReorderLevel(int reorderLevel) {
         this.reorderLevel = reorderLevel;
+    }
+
+    // AGREGADOS GETTER Y SETTER
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 
     public OffsetDateTime getUpdatedAt() {

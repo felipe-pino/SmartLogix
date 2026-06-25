@@ -34,77 +34,43 @@ public class InventoryService {
         item.setAvailableQuantity(request.initialQuantity());
         item.setReservedQuantity(0);
         item.setReorderLevel(request.reorderLevel());
+        item.setPrice(request.price()); // AGREGADO
 
         return toResponse(repository.save(item));
     }
 
-    @Transactional(readOnly = true)
-    public List<InventoryItemResponse> findAll() {
+    public List<InventoryItemResponse> getAllInventory() {
         return repository.findAll().stream()
                 .map(this::toResponse)
                 .toList();
     }
 
-    @Transactional(readOnly = true)
     public InventoryItemResponse findBySku(String sku) {
-        InventoryItem item = loadBySku(sku);
-        return toResponse(item);
+        return toResponse(loadBySku(sku));
     }
 
-    @Transactional(readOnly = true)
     public InventoryAvailabilityResponse checkAvailability(String sku, int quantity) {
         InventoryItem item = loadBySku(sku);
         boolean available = item.getAvailableQuantity() >= quantity;
-        return new InventoryAvailabilityResponse(
-                item.getSku(),
-                quantity,
-                item.getAvailableQuantity(),
-                available
-        );
+        return new InventoryAvailabilityResponse(item.getSku(), quantity, item.getAvailableQuantity(), available);
     }
 
-    public InventoryItemResponse reserve(String sku, int quantity) {
+    public InventoryItemResponse reserveStock(String sku, int quantity) {
         InventoryItem item = loadBySku(sku);
-        if (quantity <= 0) {
-            throw new InventoryOperationException("La cantidad debe ser mayor a 0.");
-        }
         if (item.getAvailableQuantity() < quantity) {
-            throw new InventoryOperationException(
-                    "Stock insuficiente para SKU " + sku + ". Disponible: " + item.getAvailableQuantity());
+            throw new InventoryOperationException("Stock insuficiente para reservar SKU: " + sku);
         }
-
         item.setAvailableQuantity(item.getAvailableQuantity() - quantity);
         item.setReservedQuantity(item.getReservedQuantity() + quantity);
-
         return toResponse(repository.save(item));
     }
 
-    public InventoryItemResponse release(String sku, int quantity) {
+    public InventoryItemResponse releaseStock(String sku, int quantity) {
         InventoryItem item = loadBySku(sku);
-        if (quantity <= 0) {
-            throw new InventoryOperationException("La cantidad debe ser mayor a 0.");
-        }
         if (item.getReservedQuantity() < quantity) {
-            throw new InventoryOperationException(
-                    "No hay suficiente stock reservado para liberar en SKU " + sku);
+            throw new InventoryOperationException("No hay suficiente stock reservado para liberar en SKU: " + sku);
         }
-
-        item.setReservedQuantity(item.getReservedQuantity() - quantity);
         item.setAvailableQuantity(item.getAvailableQuantity() + quantity);
-
-        return toResponse(repository.save(item));
-    }
-
-    public InventoryItemResponse dispatch(String sku, int quantity) {
-        InventoryItem item = loadBySku(sku);
-        if (quantity <= 0) {
-            throw new InventoryOperationException("La cantidad debe ser mayor a 0.");
-        }
-        if (item.getReservedQuantity() < quantity) {
-            throw new InventoryOperationException(
-                    "No hay stock reservado suficiente para despachar SKU " + sku);
-        }
-
         item.setReservedQuantity(item.getReservedQuantity() - quantity);
         return toResponse(repository.save(item));
     }
@@ -120,6 +86,7 @@ public class InventoryService {
         item.setAvailableQuantity(request.availableQuantity());
         item.setReservedQuantity(request.reservedQuantity());
         item.setReorderLevel(request.reorderLevel());
+        item.setPrice(request.price()); // AGREGADO
 
         return toResponse(repository.save(item));
     }
@@ -142,6 +109,7 @@ public class InventoryService {
                 item.getAvailableQuantity(),
                 item.getReservedQuantity(),
                 item.getReorderLevel(),
+                item.getPrice(), // AGREGADO
                 item.getUpdatedAt()
         );
     }

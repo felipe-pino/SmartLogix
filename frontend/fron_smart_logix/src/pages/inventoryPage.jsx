@@ -3,7 +3,7 @@ import { getInventory } from "../services/inventoryService";
 import Navbar from "../components/Navbar";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { normalizeSearchTerm, formatDate } from "../utils/formatters";
-import { LuSearch, LuPackage2 } from "react-icons/lu"; // Iconos para UX
+import { LuSearch, LuPackage2 } from "react-icons/lu";
 import "../App.css";
 
 function InventoryPage() {
@@ -14,11 +14,7 @@ function InventoryPage() {
   useEffect(() => {
     async function loadInventory() {
       try {
-        // Simulamos carga un poco más larga para apreciar el spinner futurista
-        const [data] = await Promise.all([
-          getInventory(),
-          new Promise((resolve) => setTimeout(resolve, 1200))
-        ]);
+        const data = await getInventory();
         setItems(data || []);
       } catch (error) {
         console.error(error);
@@ -43,7 +39,6 @@ function InventoryPage() {
   }
 
   return (
-      // Nueva estructura de layout
       <div className="app-layout">
         <Navbar />
 
@@ -55,7 +50,6 @@ function InventoryPage() {
               <p>Monitoreo de existencias en tiempo real y flujo de mercancía.</p>
             </header>
 
-            {/* Estadísticas con animación de escala */}
             <section className="inventory-stats">
               <div className="stat-card blue-border anim-scale-in delay-1">
                 <div className="stat-card-content">
@@ -69,21 +63,18 @@ function InventoryPage() {
                   <p>{items.reduce((acc, item) => acc + (item.availableQuantity || 0), 0)}</p>
                 </div>
               </div>
-              {/* Tercera tarjeta opcional para balance visual */}
               <div className="stat-card purple-border anim-scale-in delay-3">
                 <div className="stat-card-content">
                   <h3>Valor Estimado</h3>
-                  <p>$--</p> {/* Lógica no implementada aún */}
+                  <p>$--</p>
                 </div>
               </div>
             </section>
 
-            {/* Sección de tabla con animación de subida */}
             <section className="inventory-table-section anim-fade-up delay-3">
               <div className="table-header">
                 <h2>Catálogo Global de Productos</h2>
 
-                {/* Buscador Moderno con Icono */}
                 <div className="search-container">
                   <input
                       type="text"
@@ -100,20 +91,21 @@ function InventoryPage() {
                 <table className="inventory-table">
                   <thead>
                   <tr>
-                    <th>SKU</th>
+                    <th style={{ whiteSpace: "nowrap" }}>SKU</th>
                     <th>Producto</th>
-                    <th>Ubicación</th>
-                    <th>Stock</th>
-                    <th>Reservado</th>
-                    <th>Pto. Reorden</th>
-                    <th>Última Actualización</th>
-                    <th>Estado</th>
+                    <th style={{ whiteSpace: "nowrap" }}>Bodega</th>
+                    <th style={{ whiteSpace: "nowrap" }}>Precio</th>
+                    <th style={{ whiteSpace: "nowrap", textAlign: "center" }}>Stock</th>
+                    <th style={{ whiteSpace: "nowrap", textAlign: "center" }}>Rsv.</th>
+                    <th style={{ whiteSpace: "nowrap", textAlign: "center" }}>Mínimo</th>
+                    <th style={{ whiteSpace: "nowrap" }}>Actualizado</th>
+                    <th style={{ whiteSpace: "nowrap", textAlign: "center" }}>Estado</th>
                   </tr>
                   </thead>
                   <tbody>
                   {filteredItems.length === 0 ? (
                       <tr>
-                        <td colSpan="8" style={{ textAlign: "center", padding: "60px", color: "#64748b" }}>
+                        <td colSpan="9" style={{ textAlign: "center", padding: "60px", color: "#64748b" }}>
                           <LuPackage2 style={{ fontSize: "40px", marginBottom: "15px", color: "#334155" }} />
                           <p style={{fontWeight: 600, fontSize: '16px'}}>Niveles de inventario vacíos</p>
                           <p style={{fontSize: '14px'}}>No se encontraron coincidencias para "{searchTerm}".</p>
@@ -126,11 +118,16 @@ function InventoryPage() {
                         const statusText = isAvailable ? "STOCK" : "AGOTADO";
 
                         return (
-                            // Añadimos delay escalonado inline para las primeras filas
                             <tr key={item.sku} className="anim-fade-up" style={{animationDelay: `${0.1 + (index * 0.03)}s`}}>
-                              <td><span className="sku">{item.sku}</span></td>
-                              <td style={{fontWeight: 700, color: 'white'}}>{item.productName}</td>
-                              <td>
+                              <td style={{ whiteSpace: "nowrap" }}>
+                                <span className="sku">{item.sku}</span>
+                              </td>
+
+                              <td style={{ fontWeight: 700, color: 'white', minWidth: '180px' }}>
+                                {item.productName}
+                              </td>
+
+                              <td style={{ whiteSpace: "nowrap" }}>
                                 {item.warehouseCode ? (
                                     <span className="text-light">{item.warehouseCode}</span>
                                 ) : (
@@ -138,26 +135,34 @@ function InventoryPage() {
                                 )}
                               </td>
 
-                              <td className={`font-bold ${item.availableQuantity > 0 ? "text-success" : "text-danger"}`} style={{fontSize: '16px'}}>
+                              <td style={{ whiteSpace: "nowrap", color: "#e2e8f0" }}>
+                                {item.price !== undefined && item.price !== null ? (
+                                    `$${Number(item.price).toFixed(2)}`
+                                ) : (
+                                    <span className="badge-muted">N/A</span>
+                                )}
+                              </td>
+
+                              <td className={`font-bold ${item.availableQuantity > 0 ? "text-success" : "text-danger"}`} style={{ fontSize: '16px', textAlign: "center" }}>
                                 {item.availableQuantity}
                               </td>
 
-                              <td className="text-muted">
+                              <td className="text-muted" style={{ textAlign: "center" }}>
                                 {item.reservedQuantity || 0}
                               </td>
 
-                              <td className="text-muted">
+                              <td className="text-muted" style={{ textAlign: "center" }}>
                                 {item.reorderLevel || 0}
                               </td>
 
-                              <td className="date-cell">
+                              <td className="date-cell" style={{ whiteSpace: "nowrap" }}>
                                 {item.updatedAt ? formatDate(item.updatedAt) : <span className="badge-muted">Sin registro</span>}
                               </td>
 
-                              <td>
-                            <span className={`status ${statusClass}`}>
-                              {statusText}
-                            </span>
+                              <td style={{ whiteSpace: "nowrap", textAlign: "center" }}>
+                                <span className={`status ${statusClass}`}>
+                                  {statusText}
+                                </span>
                               </td>
                             </tr>
                         );

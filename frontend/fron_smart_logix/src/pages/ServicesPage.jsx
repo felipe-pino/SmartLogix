@@ -3,14 +3,14 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import {
   createInventoryItemRequest, updateInventoryItemRequest, deleteInventoryItemRequest
-} from "../api/inventoryApi";
+} from "../API/inventoryApi";
 import {
   createOrderRequest, updateOrderStatusRequest, deleteOrderRequest
-} from "../api/orderApi";
-import { getAllUsersRequest, updateUserRequest } from "../api/authApi";
+} from "../API/orderApi";
+import { getAllUsersRequest, updateUserRequest } from "../API/authApi";
 import {
   createShipmentRequest, updateShipmentRequest, updateShipmentStatusRequest, deleteShipmentRequest
-} from "../api/shipmentApi";
+} from "../API/shipmentApi";
 import "../App.css";
 
 // ==========================================

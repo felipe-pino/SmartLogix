@@ -9,16 +9,16 @@ import {
 
 import Login from "./pages/loginPage";
 import RegisterPage from "./pages/RegisterPage";
-import InventoryPage from "./pages/InventoryPage";
+import InventoryPage from "./pages/inventoryPage";
 import OrdersPage from "./pages/OrdersPage";
 import ShipmentsPage from "./pages/ShipmentsPage";
 import ServicesPage from "./pages/ServicesPage";
 import ProfilePage from "./pages/ProfilePage";
-
-// 1. IMPORTAMOS EL NUEVO DASHBOARD
 import DashboardPage from "./pages/DashboardPage";
+import PaymentsPage from "./pages/PaymentsPage";
+import PaymentMethodPage from "./pages/PaymentMethodPage";
+import StorePage from "./pages/StorePage";
 
-// VALIDADOR NATIVO SEGURO CON LOCALSTORAGE
 function ProtectedRoute({ children }) {
     const token = localStorage.getItem("token");
 
@@ -47,9 +47,17 @@ function App() {
                         element={<RegisterPage />}
                     />
 
-                    {/* Rutas Protegidas de la aplicación */}
+                    {/* TIENDA (clientes) */}
+                    <Route
+                        path="/store"
+                        element={
+                            <ProtectedRoute>
+                                <StorePage />
+                            </ProtectedRoute>
+                        }
+                    />
 
-                    {/* 2. AGREGAMOS LA NUEVA RUTA DEL DASHBOARD PROTEGIDA */}
+                    {/* DASHBOARD — ruta que faltaba y causaba que el link de Navbar no funcionara */}
                     <Route
                         path="/dashboard"
                         element={
@@ -59,6 +67,7 @@ function App() {
                         }
                     />
 
+                    {/* INVENTARIO */}
                     <Route
                         path="/inventory"
                         element={
@@ -68,6 +77,7 @@ function App() {
                         }
                     />
 
+                    {/* ÓRDENES */}
                     <Route
                         path="/orders"
                         element={
@@ -77,11 +87,32 @@ function App() {
                         }
                     />
 
+                    {/* EMBARQUES / DESPACHOS */}
                     <Route
                         path="/shipments"
                         element={
                             <ProtectedRoute>
                                 <ShipmentsPage />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* PAGOS */}
+                    <Route
+                        path="/payments"
+                        element={
+                            <ProtectedRoute>
+                                <PaymentsPage />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* MÉTODO DE PAGO */}
+                    <Route
+                        path="/payment-method"
+                        element={
+                            <ProtectedRoute>
+                                <PaymentMethodPage />
                             </ProtectedRoute>
                         }
                     />
@@ -102,6 +133,12 @@ function App() {
                                 <ProfilePage />
                             </ProtectedRoute>
                         }
+                    />
+
+                    {/* Redirección automática a la tienda en caso de ruta inválida */}
+                    <Route
+                        path="*"
+                        element={<Navigate to="/store" replace />}
                     />
 
                 </Routes>

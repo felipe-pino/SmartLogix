@@ -1,15 +1,38 @@
 const API_URL_BASE = "http://localhost:8080";
 
-export async function httpRequest(endpoint, options = {}) {
+// Limpia la sesión preservando los métodos de pago guardados
+function clearSession() {
+  const savedCards = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith("paymentMethod_")) {
+      savedCards[key] = localStorage.getItem(key);
+    }
+  }
+
+  localStorage.clear();
+
+  Object.entries(savedCards).forEach(([key, value]) => {
+    localStorage.setItem(key, value);
+  });
+}
+
+/**
+ * @param {string} endpoint
+ * @param {RequestInit} options
+ * @param {{ critical?: boolean }} meta
+ *   critical: si es false, un 401/403 lanza el error pero NO limpia sesión ni redirige.
+ *             Úsalo en peticiones secundarias (ej: getPaymentMethods dentro de OrdersPage).
+ *             Por defecto es true para mantener comportamiento seguro en peticiones principales.
+ */
+export async function httpRequest(endpoint, options = {}, { critical = true } = {}) {
   const token = localStorage.getItem("token");
 
-  // 1. Configuramos los headers básicos
   const headers = {
     "Content-Type": "application/json",
     ...options.headers,
   };
 
-  // 2. Si existe un token de sesión, lo inyectamos automáticamente
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
@@ -20,39 +43,44 @@ export async function httpRequest(endpoint, options = {}) {
   };
 
   try {
-    // 3. Realizamos la petición real al Backend de Spring Boot
     const response = await fetch(`${API_URL_BASE}${endpoint}`, config);
 
-    // ========================================================
-    // INTERCEPTOR DE ERRORES GLOBAL (REGLA DE LA RÚBRICA)
-    // ========================================================
-    if (response.status === 401 || response.status === 403) {
-      console.warn("Sesión expirada o no autorizada. Limpiando credenciales...");
-      
-      // Borramos el token y datos guardados para proteger la app
-      localStorage.clear();
-      
-      // Forzamos la redirección al Login de forma nativa e inmediata
+    // ============================================================
+    // INTERCEPTOR DE ERRORES GLOBAL
+    // ============================================================
+
+    if (response.status === 401) {
+      // 401 = token inválido o expirado. Siempre cerrar sesión.
+      console.warn("Sesión expirada (401). Limpiando credenciales...");
+      clearSession();
       window.location.href = "/";
-      
       throw new Error("Su sesión ha expirado. Por favor, inicie sesión nuevamente.");
     }
 
-    // Si la respuesta no es exitosa (ej: 404, 500), lanzamos el error
+    if (response.status === 403) {
+      // 403 = token válido pero sin permiso para este recurso.
+      // En peticiones críticas (navegación principal) sí redirigimos.
+      // En peticiones secundarias (ej: cargar métodos de pago dentro de otra página),
+      // solo lanzamos el error para que el caller lo maneje sin botar al usuario.
+      console.warn(`Acceso denegado (403) a ${endpoint}. critical=${critical}`);
+      if (critical) {
+        window.location.href = "/";
+      }
+      throw new Error(`Acceso denegado al recurso: ${endpoint}`);
+    }
+
     if (!response.ok) {
       throw new Error(`Error HTTP: ${response.status}`);
     }
 
-    // Si el backend responde un "204 No Content" (típico de DELETE exitosos), retornamos null
     if (response.status === 204) {
       return null;
     }
 
-    // 4. Retornamos la respuesta JSON procesada para la capa de servicios
     return await response.json();
 
   } catch (error) {
     console.error("Error capturado en el httpClient:", error.message);
-    throw error; // Re-lanzamos el error para que la página pueda enterarse si lo necesita
+    throw error;
   }
 }

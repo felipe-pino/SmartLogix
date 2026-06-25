@@ -1,5 +1,6 @@
 package com.smartlogix.inventory.dto;
 
+import java.math.BigDecimal; // AGREGADO
 import java.time.OffsetDateTime;
 
 public record InventoryItemResponse(
@@ -9,6 +10,7 @@ public record InventoryItemResponse(
         int availableQuantity,
         int reservedQuantity,
         int reorderLevel,
+        BigDecimal price, // AGREGADO
         OffsetDateTime updatedAt
 ) {
 }

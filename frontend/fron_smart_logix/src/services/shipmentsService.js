@@ -1,4 +1,4 @@
-import { getShipmentsRequest, updateShipmentRequest, updateShipmentStatusRequest, deleteShipmentRequest } from "../api/shipmentApi";
+import { getShipmentsRequest, updateShipmentRequest, updateShipmentStatusRequest, deleteShipmentRequest } from "../API/shipmentApi";
 
 /**
  * Obtiene el listado de todos los despachos y rutas de transporte.
@@ -17,7 +17,7 @@ export async function updateShipment(trackingCode, shipmentData) {
   if (!shipmentData) {
     throw new Error("Los datos de actualización del envío no pueden estar vacíos.");
   }
-  
+
   return await updateShipmentRequest(trackingCode, shipmentData);
 }
 
@@ -28,7 +28,7 @@ export async function updateShipmentStatus(trackingCode, statusValue) {
   if (!trackingCode || !trackingCode.trim()) {
     throw new Error("El código de seguimiento es indispensable para actualizar el estado.");
   }
-  
+
   // REGLA DE NEGOCIO: Impedir cadenas vacías o accidentales enviadas por la interfaz
   if (!statusValue || !statusValue.trim()) {
     throw new Error("El nuevo estado del envío es requerido y no puede consistir solo de espacios.");
