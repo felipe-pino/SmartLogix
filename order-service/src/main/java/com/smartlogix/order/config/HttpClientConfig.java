@@ -9,41 +9,41 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.List;
 
 @Configuration
 public class HttpClientConfig {
 
-    @Bean
-    @LoadBalanced
-    RestTemplate restTemplate() {
-        RestTemplate restTemplate = new RestTemplate();
-
-        // Creamos el interceptor para capturar y propagar el token JWT
-        ClientHttpRequestInterceptor interceptor = (request, body, execution) -> {
+    // Interceptor compartido: propaga el token JWT en las llamadas internas
+    private ClientHttpRequestInterceptor authInterceptor() {
+        return (request, body, execution) -> {
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
             if (attributes != null) {
                 HttpServletRequest nativeRequest = attributes.getRequest();
                 String authHeader = nativeRequest.getHeader(HttpHeaders.AUTHORIZATION);
 
-                // Si la petición original (Postman) traía el token Bearer, se lo inyectamos a la llamada interna
                 if (authHeader != null && authHeader.startsWith("Bearer ")) {
                     request.getHeaders().add(HttpHeaders.AUTHORIZATION, authHeader);
                 }
             }
             return execution.execute(request, body);
         };
+    }
 
-        // Añadimos el interceptor al RestTemplate
-        List<ClientHttpRequestInterceptor> interceptors = restTemplate.getInterceptors();
-        if (interceptors == null) {
-            interceptors = new ArrayList<>();
-        }
-        interceptors.add(interceptor);
-        restTemplate.setInterceptors(interceptors);
+    // Usado en Docker: resuelve nombres lógicos ("inventory-service") vía Eureka
+    @Bean
+    @LoadBalanced
+    RestTemplate restTemplate() {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getInterceptors().add(authInterceptor());
+        return restTemplate;
+    }
 
+    // Usado en local: pega directo a host:puerto reales, sin pasar por Eureka
+    @Bean
+    RestTemplate directRestTemplate() {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getInterceptors().add(authInterceptor());
         return restTemplate;
     }
 }

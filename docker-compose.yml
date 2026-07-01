@@ -47,6 +47,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - EUREKA_INSTANCE_HOSTNAME=auth-service
     ports:
       - "8084:8084"
     restart: on-failure
@@ -68,6 +69,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - EUREKA_INSTANCE_HOSTNAME=inventory-service
     ports:
       - "8081:8081"
     restart: on-failure
@@ -89,6 +91,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - EUREKA_INSTANCE_HOSTNAME=shipment-service
     ports:
       - "8083:8083"
     restart: on-failure
@@ -131,6 +134,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - EUREKA_INSTANCE_HOSTNAME=payment-service
     ports:
       - "8086:8086"
     restart: on-failure

@@ -5,6 +5,8 @@ import com.smartlogix.order.client.InventoryClientException;
 import com.smartlogix.order.client.ShipmentClient;
 import com.smartlogix.order.client.ShipmentRequest;
 import com.smartlogix.order.client.ShipmentResponse;
+import com.smartlogix.order.discount.DiscountStrategy;
+import com.smartlogix.order.discount.DiscountStrategyResolver;
 import com.smartlogix.order.domain.OrderLine;
 import com.smartlogix.order.domain.OrderStatus;
 import com.smartlogix.order.domain.PurchaseOrder;
@@ -29,15 +31,18 @@ public class OrderService {
     private final PurchaseOrderRepository repository;
     private final InventoryClient inventoryClient;
     private final ShipmentClient shipmentClient;
+    private final DiscountStrategyResolver discountStrategyResolver;
 
     public OrderService(
             PurchaseOrderRepository repository,
             InventoryClient inventoryClient,
-            ShipmentClient shipmentClient
+            ShipmentClient shipmentClient,
+            DiscountStrategyResolver discountStrategyResolver
     ) {
         this.repository = repository;
         this.inventoryClient = inventoryClient;
         this.shipmentClient = shipmentClient;
+        this.discountStrategyResolver = discountStrategyResolver;
     }
 
     public OrderResponse createOrder(CreateOrderRequest request) {
@@ -99,7 +104,19 @@ public class OrderService {
             totalAcumulado = totalAcumulado.add(totalLinea);
         }
 
-        order.setTotalAmount(totalAcumulado);
+        // 5. DESCUENTO PERSONALIZADO POR HISTORIAL DEL CLIENTE (Strategy pattern)
+        long previousOrders = repository.countByCustomerEmailAndStatusNotIn(
+                request.customerEmail(),
+                List.of(OrderStatus.FAILED, OrderStatus.REJECTED)
+        );
+        DiscountStrategy strategy = discountStrategyResolver.resolve(previousOrders);
+        BigDecimal descuento = strategy.calculateDiscount(totalAcumulado);
+        BigDecimal totalConDescuento = totalAcumulado.subtract(descuento);
+
+        order.setSubtotal(totalAcumulado);
+        order.setDiscountAmount(descuento);
+        order.setDiscountReason(strategy.getDescription());
+        order.setTotalAmount(totalConDescuento);
         order.setStatus(OrderStatus.APPROVED);
         PurchaseOrder savedOrder = repository.save(order);
 
@@ -184,6 +201,9 @@ public class OrderService {
         return new OrderResponse(
                 order.getOrderNumber(),
                 order.getStatus(),
+                order.getSubtotal(),
+                order.getDiscountAmount(),
+                order.getDiscountReason(),
                 order.getTotalAmount(),
                 order.getTrackingCode(),
                 order.getRejectionReason(),

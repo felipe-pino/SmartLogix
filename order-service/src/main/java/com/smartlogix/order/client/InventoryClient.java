@@ -1,5 +1,6 @@
 package com.smartlogix.order.client;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
@@ -10,16 +11,24 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Component
 public class InventoryClient {
 
-    private final RestTemplate restTemplate;
+    private final RestTemplate activeTemplate;
+    private final String baseUrl;
 
-    public InventoryClient(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public InventoryClient(RestTemplate restTemplate, @Qualifier("directRestTemplate") RestTemplate directRestTemplate) {
+        String env = System.getenv("INVENTORY_SERVICE_URL");
+        if (env != null && !env.isBlank()) {
+            this.baseUrl = env;
+            this.activeTemplate = directRestTemplate; // local: sin Eureka
+        } else {
+            this.baseUrl = "http://inventory-service";
+            this.activeTemplate = restTemplate; // docker: vía Eureka
+        }
     }
 
     public InventoryAvailabilityResponse checkAvailability(String sku, int quantity) {
         try {
-            return restTemplate.getForObject(
-                    "http://inventory-service/api/inventory/items/{sku}/availability?quantity={quantity}",
+            return activeTemplate.getForObject(
+                    baseUrl + "/api/inventory/items/{sku}/availability?quantity={quantity}",
                     InventoryAvailabilityResponse.class,
                     sku,
                     quantity
@@ -36,8 +45,8 @@ public class InventoryClient {
 
     public void reserve(String sku, int quantity) {
         try {
-            restTemplate.postForObject(
-                    "http://inventory-service/api/inventory/items/{sku}/reserve?quantity={quantity}",
+            activeTemplate.postForObject(
+                    baseUrl + "/api/inventory/items/{sku}/reserve?quantity={quantity}",
                     null,
                     Object.class,
                     sku,
@@ -53,8 +62,8 @@ public class InventoryClient {
 
     public void release(String sku, int quantity) {
         try {
-            restTemplate.postForObject(
-                    "http://inventory-service/api/inventory/items/{sku}/release?quantity={quantity}",
+            activeTemplate.postForObject(
+                    baseUrl + "/api/inventory/items/{sku}/release?quantity={quantity}",
                     null,
                     Object.class,
                     sku,
@@ -69,8 +78,8 @@ public class InventoryClient {
 
     public InventoryItemResponse getItemBySku(String sku) {
         try {
-            return restTemplate.getForObject(
-                    "http://inventory-service/api/inventory/items/{sku}",
+            return activeTemplate.getForObject(
+                    baseUrl + "/api/inventory/items/{sku}",
                     InventoryItemResponse.class,
                     sku
             );

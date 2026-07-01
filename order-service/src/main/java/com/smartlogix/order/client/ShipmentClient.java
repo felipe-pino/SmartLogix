@@ -1,5 +1,6 @@
 package com.smartlogix.order.client;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -7,23 +8,34 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class ShipmentClient {
 
-    private final RestTemplate restTemplate;
+    private final RestTemplate activeTemplate;
     private final CircuitBreakerFactory<?, ?> circuitBreakerFactory;
+    private final String baseUrl;
 
-    public ShipmentClient(RestTemplate restTemplate, CircuitBreakerFactory<?, ?> circuitBreakerFactory) {
-        this.restTemplate = restTemplate;
+    public ShipmentClient(
+            RestTemplate restTemplate,
+            @Qualifier("directRestTemplate") RestTemplate directRestTemplate,
+            CircuitBreakerFactory<?, ?> circuitBreakerFactory
+    ) {
         this.circuitBreakerFactory = circuitBreakerFactory;
+        String env = System.getenv("SHIPMENT_SERVICE_URL");
+        if (env != null && !env.isBlank()) {
+            this.baseUrl = env;
+            this.activeTemplate = directRestTemplate; // local: sin Eureka
+        } else {
+            this.baseUrl = "http://shipment-service";
+            this.activeTemplate = restTemplate; // docker: vía Eureka
+        }
     }
 
     public ShipmentResponse requestShipment(ShipmentRequest request) {
         return circuitBreakerFactory.create("shipmentService").run(
-                () -> restTemplate.postForObject(
-                        "http://shipment-service/api/shipments",
+                () -> activeTemplate.postForObject(
+                        baseUrl + "/api/shipments",
                         request,
                         ShipmentResponse.class
                 ),
                 throwable -> {
-                    // IMPRIMIR EL ERROR REAL EN DOCKER ANTES DE RESPONDER EL FALLBACK
                     System.err.println("ERROR CRÍTICO LLAMANDO A SHIPMENT-SERVICE: " + throwable.getMessage());
                     throwable.printStackTrace();
                     return fallbackResponse(request);

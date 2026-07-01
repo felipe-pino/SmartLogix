@@ -44,6 +44,15 @@ public class PurchaseOrder {
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal totalAmount;
 
+    @Column(precision = 14, scale = 2)
+    private BigDecimal subtotal;
+
+    @Column(precision = 14, scale = 2)
+    private BigDecimal discountAmount;
+
+    @Column(length = 100)
+    private String discountReason;
+
     @Column(length = 40)
     private String trackingCode;
 
@@ -117,6 +126,30 @@ public class PurchaseOrder {
 
     public void setTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
+    }
+
+    public BigDecimal getSubtotal() {
+        return subtotal;
+    }
+
+    public void setSubtotal(BigDecimal subtotal) {
+        this.subtotal = subtotal;
+    }
+
+    public BigDecimal getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(BigDecimal discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+
+    public String getDiscountReason() {
+        return discountReason;
+    }
+
+    public void setDiscountReason(String discountReason) {
+        this.discountReason = discountReason;
     }
 
     public String getTrackingCode() {

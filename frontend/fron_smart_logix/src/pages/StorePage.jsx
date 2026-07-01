@@ -122,10 +122,13 @@ function StorePage() {
             setIsProcessingOrder(true);
             const createdOrder = await createOrder(orderData);
 
-            // Mostrar el total REAL que calculó el backend (con precios dinámicos)
+            // Mostrar el total REAL que calculó el backend (con precios dinámicos + descuento personalizado)
             setOrderSuccess({
                 orderNumber: createdOrder.orderNumber,
                 totalAmount: createdOrder.totalAmount,
+                subtotal: createdOrder.subtotal,
+                discountAmount: createdOrder.discountAmount,
+                discountReason: createdOrder.discountReason,
                 status: createdOrder.status,
             });
 
@@ -175,6 +178,11 @@ function StorePage() {
                                 <p style={{ margin: "4px 0 0 0", color: "#a0aec0", fontSize: "13px" }}>
                                     N° {orderSuccess.orderNumber} — Estado: {orderSuccess.status} — Total cobrado por el sistema: <strong style={{ color: "#48bb78" }}>${Number(orderSuccess.totalAmount).toFixed(2)}</strong>
                                 </p>
+                                {orderSuccess.discountAmount > 0 && (
+                                    <p style={{ margin: "4px 0 0 0", color: "#68d391", fontSize: "13px", fontWeight: "700" }}>
+                                        🎉 {orderSuccess.discountReason}: -${Number(orderSuccess.discountAmount).toFixed(2)} (Subtotal: ${Number(orderSuccess.subtotal).toFixed(2)})
+                                    </p>
+                                )}
                                 <p style={{ margin: "4px 0 0 0", color: "#718096", fontSize: "12px" }}>
                                     El total puede diferir del subtotal estimado por descuentos o recargos de precio dinámico aplicados por el servidor.
                                 </p>

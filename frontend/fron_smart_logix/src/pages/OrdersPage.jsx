@@ -248,6 +248,11 @@ function OrdersPage() {
                                 <td className="date-cell">{formatDate(order.createdAt)}</td>
                                 <td className="font-bold text-success total-amount-cell">
                                   {formatCurrency(order.totalAmount || 0)}
+                                  {order.discountAmount > 0 && (
+                                      <div style={{ fontSize: "11px", color: "#22c55e", fontWeight: 600 }}>
+                                        {order.discountReason} (-{formatCurrency(order.discountAmount)})
+                                      </div>
+                                  )}
                                 </td>
                                 <td onClick={(e) => e.stopPropagation()}>
                                   {estaPagado ? (

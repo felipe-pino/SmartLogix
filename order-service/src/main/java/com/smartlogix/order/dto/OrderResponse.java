@@ -8,6 +8,9 @@ import java.util.List;
 public record OrderResponse(
         String orderNumber,
         OrderStatus status,
+        BigDecimal subtotal,
+        BigDecimal discountAmount,
+        String discountReason,
         BigDecimal totalAmount,
         String trackingCode,
         String reason,
