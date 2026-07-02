@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -29,11 +30,16 @@ public class InventoryController {
 
     private final InventoryService inventoryService;
 
+    // Roles que pueden administrar el catálogo de inventario (igual que en el frontend)
+    private static final String INVENTORY_MANAGEMENT_ROLES =
+            "hasAnyRole('ADMIN','INVENTORY_MANAGER','WAREHOUSE_MANAGER')";
+
     public InventoryController(InventoryService inventoryService) {
         this.inventoryService = inventoryService;
     }
 
     @PostMapping("/items")
+    @PreAuthorize(INVENTORY_MANAGEMENT_ROLES)
     public InventoryItemResponse create(@Valid @RequestBody CreateInventoryItemRequest request) {
         return inventoryService.createItem(request);
     }
@@ -54,6 +60,7 @@ public class InventoryController {
     // ==========================================
 
     @PutMapping("/items/{sku}")
+    @PreAuthorize(INVENTORY_MANAGEMENT_ROLES)
     public InventoryItemResponse update(
             @PathVariable("sku") String sku,
             @Valid @RequestBody UpdateInventoryItemRequest request) {
@@ -61,6 +68,7 @@ public class InventoryController {
     }
 
     @DeleteMapping("/items/{sku}")
+    @PreAuthorize(INVENTORY_MANAGEMENT_ROLES)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable("sku") String sku) {
         inventoryService.deleteItem(sku);

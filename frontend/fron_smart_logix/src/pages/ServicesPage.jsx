@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import {
+  LuBoxes, LuShoppingCart, LuTruck, LuUsers, LuPlus, LuPencil,
+  LuTriangleAlert, LuShieldCheck, LuX
+} from "react-icons/lu";
+import {
   createInventoryItemRequest, updateInventoryItemRequest, deleteInventoryItemRequest
 } from "../API/inventoryApi";
 import {
@@ -16,8 +20,8 @@ import "../App.css";
 // ==========================================
 // ESTADO INICIAL DE LOS FORMULARIOS
 // ==========================================
-const INITIAL_INVENTORY = { sku: "", productName: "", warehouseCode: "", initialQuantity: 0, reorderLevel: 0 };
-const INITIAL_INVENTORY_UPDATE = { sku: "", productName: "", availableQuantity: 0, reservedQuantity: 0, reorderLevel: 0 };
+const INITIAL_INVENTORY = { sku: "", productName: "", warehouseCode: "", initialQuantity: 0, reorderLevel: 0, price: "" };
+const INITIAL_INVENTORY_UPDATE = { sku: "", productName: "", availableQuantity: 0, reservedQuantity: 0, reorderLevel: 0, price: "" };
 const INITIAL_INVENTORY_DELETE = { sku: "" };
 
 const INITIAL_ORDER = { customerName: "", customerEmail: "", shippingAddress: "", lines: [{ sku: "", quantity: 1, unitPrice: 0.01 }] };
@@ -58,6 +62,18 @@ const normalizeEmail = (email) => {
 function FormAlert({ status }) {
   if (!status) return null;
   return <div className={`auth-alert ${status.type === "success" ? "success" : "error"}`}>{status.message}</div>;
+}
+
+// ==========================================
+// ENCABEZADO DE SECCIÓN (con acento de color e ícono)
+// ==========================================
+function SectionHeader({ icon, title, accent }) {
+  return (
+      <div className="svc-section-header" style={{ "--svc-accent": accent }}>
+        <span className="svc-section-icon">{icon}</span>
+        <h2 className="svc-section-title">{title}</h2>
+      </div>
+  );
 }
 
 // ==========================================
@@ -117,6 +133,7 @@ function ServicesPage() {
         sku: inventoryForm.sku.trim().toUpperCase(), productName: inventoryForm.productName.trim(),
         warehouseCode: inventoryForm.warehouseCode.trim().toUpperCase(),
         initialQuantity: safeNumber(inventoryForm.initialQuantity), reorderLevel: safeNumber(inventoryForm.reorderLevel),
+        price: safeFloat(inventoryForm.price, 0),
       });
       setStatus('invCreate', { type: "success", message: `Producto registrado.` });
       setInventoryForm(INITIAL_INVENTORY);
@@ -133,6 +150,7 @@ function ServicesPage() {
       await updateInventoryItemRequest(sku, {
         productName: inventoryUpdateForm.productName.trim(), availableQuantity: safeNumber(inventoryUpdateForm.availableQuantity),
         reservedQuantity: safeNumber(inventoryUpdateForm.reservedQuantity), reorderLevel: safeNumber(inventoryUpdateForm.reorderLevel),
+        price: safeFloat(inventoryUpdateForm.price, 0),
       });
       setStatus('invUpdate', { type: "success", message: `Producto actualizado.` });
       setInventoryUpdateForm(INITIAL_INVENTORY_UPDATE);
@@ -338,25 +356,31 @@ function ServicesPage() {
         <Navbar />
 
         <main className="main-content">
-          <div className="inventory-container anim-fade-up">
-            <header className="inventory-header">
-              <h1>Panel de Servicios Operativos</h1>
-              <p>Herramientas autorizadas para: <strong style={{color: 'var(--color-primary)'}}>{role}</strong></p>
+          <div className="svc-page anim-fade-up">
+
+            <header className="svc-hero">
+              <div className="svc-hero-icon"><LuShieldCheck size={26} /></div>
+              <div>
+                <h1>Panel de Servicios Operativos</h1>
+                <p>Herramientas administrativas habilitadas para tu rol</p>
+              </div>
+              <span className="svc-role-badge">{role.replace("ROLE_", "")}</span>
             </header>
 
             <div className="services-layout">
 
               {/* 1. MÓDULO DE INVENTARIO */}
               {(role === "ROLE_ADMIN" || role === "ROLE_INVENTORY_MANAGER" || role === "ROLE_WAREHOUSE_MANAGER") && (
-                  <section className="inventory-table-section anim-fade-up delay-1">
-                    <div className="table-header"><h2 className="title-inventory">Gestión de Inventario</h2></div>
+                  <section className="svc-section anim-fade-up delay-1">
+                    <SectionHeader icon={<LuBoxes size={20} />} title="Gestión de Inventario" accent="var(--color-primary)" />
                     <div className="flex-col-gap-35">
                       <form onSubmit={handleInventorySubmit} className="flex-col-gap-20">
-                        <h3 className="subtitle-common">Crear Nuevo Producto</h3>
+                        <h3 className="subtitle-common"><LuPlus size={16} style={{ marginRight: 6, verticalAlign: "-2px" }} />Crear Nuevo Producto</h3>
                         <div className="grid-1-1">
                           <label className="auth-label">SKU <input type="text" className="auth-input" required value={inventoryForm.sku} onChange={(e) => setInventoryForm({ ...inventoryForm, sku: e.target.value })} /></label>
                           <label className="auth-label">Nombre <input type="text" className="auth-input" required value={inventoryForm.productName} onChange={(e) => setInventoryForm({ ...inventoryForm, productName: e.target.value })} /></label>
                           <label className="auth-label">Bodega <input type="text" className="auth-input" required value={inventoryForm.warehouseCode} onChange={(e) => setInventoryForm({ ...inventoryForm, warehouseCode: e.target.value })} /></label>
+                          <label className="auth-label">Precio ($) <input type="number" min="0" step="0.01" className="auth-input" required placeholder="Ej: 12990.00" value={inventoryForm.price} onChange={(e) => setInventoryForm({ ...inventoryForm, price: e.target.value })} /></label>
                           <label className="auth-label">Cantidad <input type="number" min="0" className="auth-input" required value={inventoryForm.initialQuantity} onChange={(e) => setInventoryForm({ ...inventoryForm, initialQuantity: e.target.value })} /></label>
                           <label className="auth-label">Reorden <input type="number" min="0" className="auth-input" required value={inventoryForm.reorderLevel} onChange={(e) => setInventoryForm({ ...inventoryForm, reorderLevel: e.target.value })} /></label>
                         </div>
@@ -366,16 +390,19 @@ function ServicesPage() {
 
                       <div className="grid-autofit">
                         <form onSubmit={handleInventoryUpdateSubmit} className="service-card-form">
-                          <h3 className="subtitle-common">Actualizar Inventario</h3>
+                          <h3 className="subtitle-common"><LuPencil size={16} style={{ marginRight: 6, verticalAlign: "-2px" }} />Actualizar Inventario</h3>
                           <label className="auth-label">SKU <input type="text" className="auth-input" required value={inventoryUpdateForm.sku} onChange={(e) => setInventoryUpdateForm({ ...inventoryUpdateForm, sku: e.target.value })} /></label>
+                          <label className="auth-label">Nombre <input type="text" className="auth-input" required value={inventoryUpdateForm.productName} onChange={(e) => setInventoryUpdateForm({ ...inventoryUpdateForm, productName: e.target.value })} /></label>
+                          <label className="auth-label">Precio ($) <input type="number" min="0" step="0.01" className="auth-input" required placeholder="Ej: 12990.00" value={inventoryUpdateForm.price} onChange={(e) => setInventoryUpdateForm({ ...inventoryUpdateForm, price: e.target.value })} /></label>
                           <label className="auth-label">Stock Disp. <input type="number" min="0" className="auth-input" required value={inventoryUpdateForm.availableQuantity} onChange={(e) => setInventoryUpdateForm({ ...inventoryUpdateForm, availableQuantity: e.target.value })} /></label>
                           <label className="auth-label">Stock Reservado <input type="number" min="0" className="auth-input" required value={inventoryUpdateForm.reservedQuantity} onChange={(e) => setInventoryUpdateForm({ ...inventoryUpdateForm, reservedQuantity: e.target.value })} /></label>
+                          <label className="auth-label">Reorden <input type="number" min="0" className="auth-input" required value={inventoryUpdateForm.reorderLevel} onChange={(e) => setInventoryUpdateForm({ ...inventoryUpdateForm, reorderLevel: e.target.value })} /></label>
                           <button type="submit" className={`auth-submit-btn mt-auto ${loadingStates.invUpdate ? "loading" : ""}`} disabled={loadingStates.invUpdate}>Actualizar</button>
                           <FormAlert status={statusMessages.invUpdate} />
                         </form>
 
                         <form onSubmit={handleInventoryDeleteSubmit} className="service-card-form danger">
-                          <h3 className="title-danger">Zona de Peligro</h3>
+                          <h3 className="title-danger"><LuTriangleAlert size={16} style={{ marginRight: 6, verticalAlign: "-2px" }} />Zona de Peligro</h3>
                           <label className="auth-label text-danger-light">SKU a Eliminar <input type="text" className="auth-input input-danger" required value={inventoryDeleteForm.sku} onChange={(e) => setInventoryDeleteForm({ ...inventoryDeleteForm, sku: e.target.value })} /></label>
                           <button type="submit" className={`btn-danger-large ${loadingStates.invDelete ? "loading" : ""}`} disabled={loadingStates.invDelete}>Eliminar Definitivamente</button>
                           <FormAlert status={statusMessages.invDelete} />
@@ -387,15 +414,15 @@ function ServicesPage() {
 
               {/* 2. MÓDULO DE ÓRDENES */}
               {(role === "ROLE_ADMIN" || role === "ROLE_ORDER_MANAGER") && (
-                  <section className="inventory-table-section anim-fade-up delay-2">
-                    <div className="table-header"><h2 className="title-orders">Gestión de Órdenes</h2></div>
+                  <section className="svc-section anim-fade-up delay-2">
+                    <SectionHeader icon={<LuShoppingCart size={20} />} title="Gestión de Órdenes" accent="var(--color-secondary)" />
                     <div className="flex-col-gap-35">
                       <form onSubmit={handleOrderSubmit} className="flex-col-gap-20">
-                        <h3 className="subtitle-common">Crear Nueva Orden</h3>
+                        <h3 className="subtitle-common"><LuPlus size={16} style={{ marginRight: 6, verticalAlign: "-2px" }} />Crear Nueva Orden</h3>
                         <div className="grid-1-1">
                           <label className="auth-label">Cliente <input type="text" className="auth-input" required value={orderForm.customerName} onChange={(e) => setOrderForm({ ...orderForm, customerName: e.target.value })} /></label>
                           <label className="auth-label">Correo
-                            <div className="flex-row-gap-5" style={{display: 'flex', gap: '5px'}}>
+                            <div style={{display: 'flex', gap: '5px'}}>
                               <input type="text" className="auth-input" required value={orderForm.customerEmail} onChange={(e) => setOrderForm({ ...orderForm, customerEmail: e.target.value })} />
                               <button type="button" onClick={insertAtSymbol} className="nav-btn" disabled={loadingStates.ordCreate || orderForm.customerEmail.includes("@")}>@</button>
                             </div>
@@ -409,11 +436,11 @@ function ServicesPage() {
                             <button type="button" className="nav-btn" onClick={handleAddOrderLine}>+ Línea</button>
                           </div>
                           {orderForm.lines.map((line, index) => (
-                              <div key={index} className="grid-1-1-1-auto" style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
+                              <div key={index} style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                                 <label className="auth-label" style={{flex: 1}}>SKU <input type="text" className="auth-input" required value={line.sku} onChange={(e) => handleOrderLineChange(index, "sku", e.target.value)} /></label>
                                 <label className="auth-label" style={{flex: 1}}>Cant. <input type="number" min="1" className="auth-input" required value={line.quantity} onChange={(e) => handleOrderLineChange(index, "quantity", e.target.value)} /></label>
                                 <label className="auth-label" style={{flex: 1}}>Precio <input type="number" min="0.01" step="0.01" className="auth-input" required value={line.unitPrice} onChange={(e) => handleOrderLineChange(index, "unitPrice", e.target.value)} /></label>
-                                {orderForm.lines.length > 1 && <button type="button" className="logout-btn" style={{marginTop: 'auto'}} onClick={() => handleRemoveOrderLine(index)}>X</button>}
+                                {orderForm.lines.length > 1 && <button type="button" className="logout-btn" style={{marginTop: 'auto'}} onClick={() => handleRemoveOrderLine(index)}><LuX size={16} /></button>}
                               </div>
                           ))}
                         </div>
@@ -424,7 +451,7 @@ function ServicesPage() {
                       {/* Formularios restaurados de Órdenes */}
                       <div className="grid-autofit">
                         <form onSubmit={handleOrderStatusUpdateSubmit} className="service-card-form">
-                          <h3 className="subtitle-common">Actualizar Estado de Orden</h3>
+                          <h3 className="subtitle-common"><LuPencil size={16} style={{ marginRight: 6, verticalAlign: "-2px" }} />Actualizar Estado de Orden</h3>
                           <label className="auth-label">N° de Orden <input type="text" className="auth-input" required placeholder="ORD-XXXX" value={orderStatusUpdateForm.orderNumber} onChange={(e) => setOrderStatusUpdateForm({ ...orderStatusUpdateForm, orderNumber: e.target.value })} /></label>
                           <label className="auth-label">Nuevo Estado
                             <select className="auth-input" value={orderStatusUpdateForm.status} onChange={(e) => setOrderStatusUpdateForm({ ...orderStatusUpdateForm, status: e.target.value })}>
@@ -437,7 +464,7 @@ function ServicesPage() {
                         </form>
 
                         <form onSubmit={handleOrderDeleteSubmit} className="service-card-form danger">
-                          <h3 className="title-danger">Zona de Peligro</h3>
+                          <h3 className="title-danger"><LuTriangleAlert size={16} style={{ marginRight: 6, verticalAlign: "-2px" }} />Zona de Peligro</h3>
                           <label className="auth-label text-danger-light">N° de Orden a Eliminar
                             <input type="text" className="auth-input input-danger" required placeholder="ORD-XXXX" value={orderDeleteForm.orderNumber} onChange={(e) => setOrderDeleteForm({ ...orderDeleteForm, orderNumber: e.target.value })} />
                           </label>
@@ -452,12 +479,12 @@ function ServicesPage() {
 
               {/* 3. MÓDULO DE ENVÍOS */}
               {(role === "ROLE_ADMIN" || role === "ROLE_SHIPMENT_MANAGER") && (
-                  <section className="inventory-table-section anim-fade-up delay-3">
-                    <div className="table-header"><h2 className="title-shipments">Gestión de Envíos</h2></div>
+                  <section className="svc-section anim-fade-up delay-3">
+                    <SectionHeader icon={<LuTruck size={20} />} title="Gestión de Envíos" accent="var(--color-accent)" />
                     <div className="grid-autofit">
 
                       <form onSubmit={handleShipmentCreateSubmit} className="service-card-form">
-                        <h3 className="subtitle-common">Generar Envío</h3>
+                        <h3 className="subtitle-common"><LuPlus size={16} style={{ marginRight: 6, verticalAlign: "-2px" }} />Generar Envío</h3>
                         <label className="auth-label">N° Orden <input type="text" className="auth-input" required value={shipmentCreateForm.orderNumber} onChange={(e) => setShipmentCreateForm({ ...shipmentCreateForm, orderNumber: e.target.value })} /></label>
                         <label className="auth-label">Dirección <input type="text" className="auth-input" required value={shipmentCreateForm.destinationAddress} onChange={(e) => setShipmentCreateForm({ ...shipmentCreateForm, destinationAddress: e.target.value })} /></label>
                         <label className="auth-label">Unidades <input type="number" min="1" className="auth-input" required value={shipmentCreateForm.totalUnits} onChange={(e) => setShipmentCreateForm({ ...shipmentCreateForm, totalUnits: safeNumber(e.target.value, 1) })} /></label>
@@ -466,7 +493,7 @@ function ServicesPage() {
                       </form>
 
                       <form onSubmit={handleShipmentStatusUpdateSubmit} className="service-card-form">
-                        <h3 className="subtitle-common">Actualización Rápida (Estado)</h3>
+                        <h3 className="subtitle-common"><LuPencil size={16} style={{ marginRight: 6, verticalAlign: "-2px" }} />Actualización Rápida (Estado)</h3>
                         <label className="auth-label">Tracking Code <input type="text" className="auth-input" required placeholder="TRK-XXX" value={shipmentStatusForm.trackingCode} onChange={(e) => setShipmentStatusForm({ ...shipmentStatusForm, trackingCode: e.target.value })} /></label>
                         <label className="auth-label">Nuevo Estado
                           <select className="auth-input" value={shipmentStatusForm.status} onChange={(e) => setShipmentStatusForm({ ...shipmentStatusForm, status: e.target.value })}>
@@ -479,8 +506,8 @@ function ServicesPage() {
 
                       {/* Formularios restaurados de Envíos */}
                       <form onSubmit={handleShipmentUpdateSubmit} className="service-card-form full-width" style={{gridColumn: '1 / -1'}}>
-                        <h3 className="subtitle-common">Edición Completa del Envío</h3>
-                        <div className="grid-autofit-small" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px'}}>
+                        <h3 className="subtitle-common"><LuPencil size={16} style={{ marginRight: 6, verticalAlign: "-2px" }} />Edición Completa del Envío</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px' }}>
                           <label className="auth-label">Tracking Code <input type="text" className="auth-input" required placeholder="TRK-XXX" value={shipmentUpdateForm.trackingCode} onChange={(e) => setShipmentUpdateForm({ ...shipmentUpdateForm, trackingCode: e.target.value })} /></label>
                           <label className="auth-label">Estado
                             <select className="auth-input" value={shipmentUpdateForm.status} onChange={(e) => setShipmentUpdateForm({ ...shipmentUpdateForm, status: e.target.value })}>
@@ -496,8 +523,8 @@ function ServicesPage() {
                       </form>
 
                       <form onSubmit={handleShipmentDeleteSubmit} className="service-card-form full-width danger" style={{gridColumn: '1 / -1'}}>
-                        <h3 className="title-danger">Zona de Peligro</h3>
-                        <div className="flex-row-end-gap-15" style={{display: 'flex', gap: '15px', alignItems: 'flex-end'}}>
+                        <h3 className="title-danger"><LuTriangleAlert size={16} style={{ marginRight: 6, verticalAlign: "-2px" }} />Zona de Peligro</h3>
+                        <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-end' }}>
                           <label className="auth-label flex-1 text-danger-light" style={{flex: 1}}>Tracking Code a Eliminar
                             <input type="text" className="auth-input input-danger" required placeholder="TRK-XXX" value={shipmentDeleteForm.trackingCode} onChange={(e) => setShipmentDeleteForm({ ...shipmentDeleteForm, trackingCode: e.target.value })} />
                           </label>
@@ -512,26 +539,26 @@ function ServicesPage() {
 
               {/* 4. GESTIÓN DE USUARIOS (Módulo Restaurado Completo) */}
               {role === "ROLE_ADMIN" && (
-                  <section className="inventory-table-section anim-fade-up delay-4">
-                    <div className="table-header"><h2 className="title-users">Módulo de Administración de Usuarios</h2></div>
+                  <section className="svc-section anim-fade-up delay-4">
+                    <SectionHeader icon={<LuUsers size={20} />} title="Administración de Usuarios" accent="#f87171" />
                     {loadingStates.users ? (
                         <div className="loading-text-users" style={{padding: '20px', color: 'white'}}>Sincronizando con Auth...</div>
                     ) : (
-                        <div className="users-table-container" style={{overflowX: 'auto'}}>
-                          <table className="users-table" style={{width: '100%', textAlign: 'left', borderCollapse: 'collapse'}}>
-                            <thead className="users-table-head">
+                        <div className="svc-table-wrap">
+                          <table className="svc-table">
+                            <thead>
                             <tr>
-                              <th className="users-th" style={{padding: '10px', borderBottom: '1px solid #444'}}>Usuario</th>
-                              <th className="users-th" style={{padding: '10px', borderBottom: '1px solid #444'}}>Correo</th>
-                              <th className="users-th-wide" style={{padding: '10px', borderBottom: '1px solid #444'}}>Rol Asignado</th>
+                              <th>Usuario</th>
+                              <th>Correo</th>
+                              <th>Rol Asignado</th>
                             </tr>
                             </thead>
                             <tbody>
                             {users.map((u) => (
-                                <tr key={u.id} className="users-tr">
-                                  <td className="users-td" style={{padding: '10px', borderBottom: '1px solid #333', color: 'white'}}>{u.username}</td>
-                                  <td className="users-td-muted" style={{padding: '10px', borderBottom: '1px solid #333', color: '#aaa'}}>{u.email}</td>
-                                  <td className="users-td" style={{padding: '10px', borderBottom: '1px solid #333'}}>
+                                <tr key={u.id}>
+                                  <td className="svc-td-strong">{u.username}</td>
+                                  <td className="svc-td-muted">{u.email}</td>
+                                  <td>
                                     <select className="auth-input" value={u.role || ""} onChange={(e) => handleRoleChange(u.id, u, e.target.value)}>
                                       <option value="" disabled hidden>Seleccione un Rol</option>
                                       {ROLES_LIST.map((r) => (<option key={r} value={r}>{r}</option>))}

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import "./App.css";
 
 import {
@@ -5,6 +6,7 @@ import {
     Routes,
     Route,
     Navigate,
+    useNavigate,
 } from "react-router-dom";
 
 import Login from "./pages/loginPage";
@@ -18,11 +20,53 @@ import DashboardPage from "./pages/DashboardPage";
 import PaymentsPage from "./pages/PaymentsPage";
 import PaymentMethodPage from "./pages/PaymentMethodPage";
 import StorePage from "./pages/StorePage";
+import { isSessionValid } from "./utils/jwt";
+
+// Cada cuánto se revisa que nadie haya tocado localStorage mientras
+// el usuario ya está adentro de una vista protegida (sin navegar).
+const SESSION_WATCH_INTERVAL_MS = 1500;
+
+/**
+ * Cierra la sesión "a la fuerza" preservando las tarjetas guardadas,
+ * igual que el logout normal, y manda al login.
+ */
+function forceLogout(navigate) {
+    const savedCards = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("paymentMethod_")) {
+            savedCards[key] = localStorage.getItem(key);
+        }
+    }
+
+    localStorage.clear();
+
+    Object.entries(savedCards).forEach(([key, value]) => {
+        localStorage.setItem(key, value);
+    });
+
+    navigate("/", { replace: true });
+}
 
 function ProtectedRoute({ children }) {
-    const token = localStorage.getItem("token");
+    const navigate = useNavigate();
 
-    if (!token) {
+    // Vigilancia activa: si el token expira, se vence, o el rol guardado en
+    // localStorage deja de coincidir con el rol firmado dentro del JWT
+    // (indicio de que alguien lo editó a mano para saltarse permisos),
+    // se cierra la sesión y se redirige al login, aunque el usuario no
+    // navegue ni recargue la página.
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (!isSessionValid()) {
+                forceLogout(navigate);
+            }
+        }, SESSION_WATCH_INTERVAL_MS);
+
+        return () => clearInterval(interval);
+    }, [navigate]);
+
+    if (!isSessionValid()) {
         return <Navigate to="/" replace />;
     }
 

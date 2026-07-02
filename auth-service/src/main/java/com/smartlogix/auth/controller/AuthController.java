@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -56,23 +57,25 @@ public class AuthController {
 
     // ==========================================
     //       CRUD DE USUARIOS PARA EL FRONT
+    //       (solo ROLE_ADMIN puede administrar usuarios)
     // ==========================================
 
-
     @GetMapping("/users")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
         List<UserDTO> users = authService.getAllUsers();
         return ResponseEntity.ok(users);
     }
 
-
     @GetMapping("/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
         UserDTO user = authService.getUserById(id);
         return ResponseEntity.ok(user);
     }
 
     @PutMapping("/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDTO> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UpdateUserRequest request) {
@@ -80,8 +83,8 @@ public class AuthController {
         return ResponseEntity.ok(updatedUser);
     }
 
-
     @DeleteMapping("/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         authService.deleteUser(id);
         return ResponseEntity.noContent().build();

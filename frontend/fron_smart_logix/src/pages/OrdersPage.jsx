@@ -249,25 +249,25 @@ function OrdersPage() {
                                 <td className="font-bold text-success total-amount-cell">
                                   {formatCurrency(order.totalAmount || 0)}
                                   {order.discountAmount > 0 && (
-                                      <div style={{ fontSize: "11px", color: "#22c55e", fontWeight: 600 }}>
+                                      <div className="text-success" style={{ fontSize: "11px" }}>
                                         {order.discountReason} (-{formatCurrency(order.discountAmount)})
                                       </div>
                                   )}
                                 </td>
                                 <td onClick={(e) => e.stopPropagation()}>
                                   {estaPagado ? (
-                                      <span style={{ color: "#22c55e", display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", fontWeight: "600" }}>
+                                      <span className="text-success" style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", fontWeight: "600" }}>
                                         <LuCheck size={16} /> Pagado
                                       </span>
                                   ) : estaFallido ? (
-                                      <span style={{ color: "#ef4444", display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", fontWeight: "600" }}>
+                                      <span className="text-danger" style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", fontWeight: "600" }}>
                                         <LuX size={16} /> Fallido
                                       </span>
                                   ) : order.status === "PENDING" && cardToken ? (
                                       <button
+                                          className="pay-btn"
                                           onClick={() => handlePagar(order)}
-                                          disabled={isPaying}
-                                          style={{ display: "flex", alignItems: "center", gap: "6px", background: "#3b82f6", color: "#fff", border: "none", borderRadius: "8px", padding: "6px 14px", fontSize: "13px", fontWeight: "600", cursor: isPaying ? "not-allowed" : "pointer", opacity: isPaying ? 0.7 : 1 }}>
+                                          disabled={isPaying}>
                                         <LuCreditCard size={14} />
                                         {isPaying ? "Procesando..." : "Pagar"}
                                       </button>
@@ -276,6 +276,47 @@ function OrdersPage() {
                                   )}
                                 </td>
                               </tr>
+
+                              {isExpanded && (
+                                  <tr className="expanded-row">
+                                    <td className="expanded-cell" colSpan="8">
+                                      <div className="expanded-content-wrapper">
+                                        <h4 className="expanded-title">Ítems de la Orden</h4>
+
+                                        {order.lines && order.lines.length > 0 ? (
+                                            <table className="details-table">
+                                              <thead>
+                                              <tr className="details-table-head">
+                                                <th className="details-th-left">SKU</th>
+                                                <th className="details-th-center">Cantidad</th>
+                                                <th className="details-th-right">Precio Unit.</th>
+                                                <th className="details-th-right">Subtotal</th>
+                                              </tr>
+                                              </thead>
+                                              <tbody>
+                                              {order.lines.map((line, i) => (
+                                                  <tr key={`${order.orderNumber}-line-${i}`} className="details-tr-body">
+                                                    <td className="details-td-sku">{line.sku}</td>
+                                                    <td className="details-td-qty">{line.quantity}</td>
+                                                    <td className="details-td-price">{formatCurrency(line.unitPrice)}</td>
+                                                    <td className="details-td-subtotal">{formatCurrency(line.lineAmount)}</td>
+                                                  </tr>
+                                              ))}
+                                              </tbody>
+                                            </table>
+                                        ) : (
+                                            <p className="details-empty">Esta orden no tiene ítems registrados.</p>
+                                        )}
+
+                                        {order.reason && (
+                                            <p className="text-danger" style={{ marginTop: "12px", fontSize: "13px" }}>
+                                              Motivo: {order.reason}
+                                            </p>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                              )}
                             </Fragment>
                         );
                       })

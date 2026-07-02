@@ -7,6 +7,7 @@ import com.smartlogix.order.service.OrderService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -22,6 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
 
     private final OrderService orderService;
+
+    // Roles que pueden administrar órdenes (igual que en el frontend)
+    private static final String ORDER_MANAGEMENT_ROLES = "hasAnyRole('ADMIN','ORDER_MANAGER')";
 
     public OrderController(OrderService orderService) {
         this.orderService = orderService;
@@ -48,6 +52,7 @@ public class OrderController {
 
     // MODIFICADO: Se elimina "/status" para usar la ruta raíz del recurso de la orden
     @PatchMapping("/{orderNumber}")
+    @PreAuthorize(ORDER_MANAGEMENT_ROLES)
     public OrderResponse updateStatus(
             @PathVariable String orderNumber,
             @Valid @RequestBody UpdateOrderStatusRequest request) {
@@ -55,6 +60,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{orderNumber}")
+    @PreAuthorize(ORDER_MANAGEMENT_ROLES)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteOrder(@PathVariable String orderNumber) {
         orderService.deleteOrder(orderNumber);

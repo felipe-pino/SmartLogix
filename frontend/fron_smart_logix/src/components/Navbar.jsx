@@ -7,7 +7,6 @@ import {
   LuUser,
   LuLogOut,
   LuSettings,
-  LuCreditCard,
   LuStore,
 } from "react-icons/lu";
 
@@ -68,6 +67,9 @@ function Navbar() {
             <span className="nav-tooltip">Órdenes</span>
           </div>
 
+          {/* Sección "Pagos" desactivada temporalmente a pedido — el link vivía acá.
+              Para reactivarla: volver a importar LuCreditCard de react-icons/lu y pegar:
+
           <div className="nav-tooltip-wrapper">
             <Link to="/payments" className={`nav-link ${isActive("/payments")}`}>
               <LuCreditCard className="nav-icon" />
@@ -75,6 +77,7 @@ function Navbar() {
             </Link>
             <span className="nav-tooltip">Pagos</span>
           </div>
+          */}
 
           <div className="nav-tooltip-wrapper">
             <Link to="/shipments" className={`nav-link ${isActive("/shipments")}`}>

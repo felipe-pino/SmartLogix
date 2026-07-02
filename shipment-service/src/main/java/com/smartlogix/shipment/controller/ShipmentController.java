@@ -8,6 +8,7 @@ import com.smartlogix.shipment.service.ShipmentService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping; // Importamos
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -24,6 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class ShipmentController {
 
     private final ShipmentService shipmentService;
+
+    // Roles que pueden administrar envíos (igual que en el frontend)
+    private static final String SHIPMENT_MANAGEMENT_ROLES = "hasAnyRole('ADMIN','SHIPMENT_MANAGER')";
 
     public ShipmentController(ShipmentService shipmentService) {
         this.shipmentService = shipmentService;
@@ -45,6 +49,7 @@ public class ShipmentController {
     }
 
     @PatchMapping("/{trackingCode}/status")
+    @PreAuthorize(SHIPMENT_MANAGEMENT_ROLES)
     public ShipmentResponse updateStatus(
             @PathVariable("trackingCode") String trackingCode,
             @RequestParam("value") ShipmentStatus value) {
@@ -56,6 +61,7 @@ public class ShipmentController {
     // ==========================================
 
     @PatchMapping("/{trackingCode}")
+    @PreAuthorize(SHIPMENT_MANAGEMENT_ROLES)
     public ShipmentResponse updateShipment(
             @PathVariable("trackingCode") String trackingCode,
             @Valid @RequestBody UpdateShipmentRequest request) {
@@ -63,6 +69,7 @@ public class ShipmentController {
     }
 
     @DeleteMapping("/{trackingCode}")
+    @PreAuthorize(SHIPMENT_MANAGEMENT_ROLES)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteShipment(@PathVariable("trackingCode") String trackingCode) {
         shipmentService.deleteShipment(trackingCode);
