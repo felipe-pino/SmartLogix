@@ -20,7 +20,9 @@ import com.smartlogix.order.repository.PurchaseOrderRepository;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -146,6 +148,25 @@ public class OrderService {
         return repository.findAll().stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    // ==========================================
+    //       NUEVO MÉTODO: RESUMEN POR ESTADO
+    //       Agrupa todas las órdenes según su OrderStatus
+    //       y cuenta cuántas hay en cada uno.
+    //       Nota de mantenibilidad: si el volumen de
+    //       órdenes crece mucho, esto puede moverse a una
+    //       consulta agregada (@Query con COUNT y GROUP BY)
+    //       en el repository, sin cambiar el contrato del
+    //       endpoint que lo consume.
+    // ==========================================
+    @Transactional(readOnly = true)
+    public Map<String, Long> getOrderStatusSummary() {
+        return repository.findAll().stream()
+                .collect(Collectors.groupingBy(
+                        order -> order.getStatus().name(),
+                        Collectors.counting()
+                ));
     }
 
     @Transactional(readOnly = true)

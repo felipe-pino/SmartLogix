@@ -6,6 +6,7 @@ import com.smartlogix.order.dto.UpdateOrderStatusRequest;
 import com.smartlogix.order.service.OrderService;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,6 +40,17 @@ public class OrderController {
     @GetMapping
     public List<OrderResponse> listOrders() {
         return orderService.getOrders();
+    }
+
+    // ==========================================
+    //       NUEVO ENDPOINT: RESUMEN POR ESTADO
+    //       IMPORTANTE: debe ir ANTES de /{orderNumber}
+    //       para que Spring no interprete "summary"
+    //       como si fuera un número de orden.
+    // ==========================================
+    @GetMapping("/summary")
+    public Map<String, Long> getSummary() {
+        return orderService.getOrderStatusSummary();
     }
 
     @GetMapping("/{orderNumber}")

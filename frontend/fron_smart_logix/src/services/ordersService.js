@@ -1,6 +1,6 @@
 // FIX: ruta corregida de "../api/orderApi" a "../API/orderApi" (mayúscula)
 // En Linux/Docker el sistema de archivos es case-sensitive y el build fallaba.
-import { getOrdersRequest, updateOrderStatusRequest, deleteOrderRequest, createOrderRequest } from "../API/orderApi";
+import { getOrdersRequest, getOrderSummaryRequest, updateOrderStatusRequest, deleteOrderRequest, createOrderRequest } from "../API/orderApi";
 
 /**
  * Crea una nueva orden de compra en el sistema.
@@ -17,6 +17,14 @@ export async function createOrder(orderData) {
  */
 export async function getOrders() {
   return await getOrdersRequest();
+}
+
+/**
+ * NUEVO: Recupera el resumen de órdenes agrupadas por estado.
+ * Ej: { "PENDING": 3, "APPROVED": 10, "SHIPMENT_REQUESTED": 5 }
+ */
+export async function getOrderSummary() {
+  return await getOrderSummaryRequest();
 }
 
 /**
